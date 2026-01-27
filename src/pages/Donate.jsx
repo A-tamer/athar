@@ -85,7 +85,7 @@ const Donate = () => {
       const screenshotURL = await getDownloadURL(screenshotRef)
 
       // Create donation document
-      await addDoc(collection(db, 'donations'), {
+      const docRef = await addDoc(collection(db, 'donations'), {
         amount: totalAmount,
         boxes: boxes || 0,
         paymentMethod: selectedMethod.name,
@@ -93,6 +93,24 @@ const Donate = () => {
         status: 'pending',
         createdAt: serverTimestamp()
       })
+
+      // Send Telegram notification
+      try {
+        await fetch('/api/notify-donation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            donationId: docRef.id,
+            amount: totalAmount,
+            boxes: boxes || 0,
+            paymentMethod: selectedMethod.name,
+            screenshotURL
+          })
+        })
+      } catch (telegramError) {
+        console.log('Telegram notification failed:', telegramError)
+        // Don't fail the donation if Telegram fails
+      }
 
       setSuccess(true)
     } catch (error) {
@@ -434,7 +452,6 @@ const Donate = () => {
             {/* Step 3: Upload Screenshot */}
             {step === 3 && (
               <motion.div
-                key="step3"
                 initial={{ opacity: 0, x: 50 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -50 }}
