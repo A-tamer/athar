@@ -6,7 +6,6 @@ const Navbar = () => {
   const location = useLocation()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
-  const isHome = location.pathname === '/'
 
   // Close menu on route change
   useEffect(() => {
@@ -22,13 +21,11 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  const showBackground = scrolled || mobileMenuOpen
-
   return (
-    <nav className={`fixed top-0 right-0 left-0 z-50 transition-all duration-500 ${
-      showBackground 
-        ? 'bg-beige-100/95 backdrop-blur-md shadow-md' 
-        : 'bg-transparent'
+    <nav className={`fixed top-0 right-0 left-0 z-50 transition-all duration-300 ${
+      scrolled 
+        ? 'bg-beige-100 shadow-md' 
+        : 'bg-beige-100/80 backdrop-blur-sm'
     }`}>
       <div className="container mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-14 sm:h-16 md:h-20">
@@ -47,20 +44,14 @@ const Navbar = () => {
           <div className="hidden md:flex items-center gap-6 lg:gap-8">
             <Link 
               to="/"
-              className={`font-bold transition-colors ${
-                location.pathname === '/' 
-                  ? 'text-gold-400' 
-                  : showBackground ? 'text-olive-800 hover:text-gold-600' : 'text-white hover:text-gold-400'
+              className={`font-bold hover:text-gold-600 transition-colors ${
+                location.pathname === '/' ? 'text-gold-600' : 'text-olive-800'
               }`}
             >
               الرئيسية
             </Link>
             <Link to="/donate">
-              <button className={`font-bold py-2 px-6 rounded-xl transition-colors shadow-md ${
-                showBackground 
-                  ? 'bg-olive-700 hover:bg-olive-800 text-beige-100' 
-                  : 'bg-gold-500 hover:bg-gold-600 text-white'
-              }`}>
+              <button className="bg-olive-700 hover:bg-olive-800 text-beige-100 font-bold py-2 px-6 rounded-xl transition-colors shadow-md">
                 تبرّع الآن
               </button>
             </Link>
@@ -70,11 +61,7 @@ const Navbar = () => {
           <motion.button 
             whileTap={{ scale: 0.9 }}
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className={`md:hidden p-3 rounded-xl transition-colors ${
-              showBackground 
-                ? 'text-olive-800 bg-beige-200/80 hover:bg-beige-300' 
-                : 'text-white bg-white/20 hover:bg-white/30'
-            }`}
+            className="md:hidden p-3 rounded-xl transition-colors text-olive-800 bg-beige-200/80 hover:bg-beige-300"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               {mobileMenuOpen ? (
