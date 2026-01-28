@@ -19,21 +19,26 @@ const Home = () => {
     )
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
+      console.log('Approved donations count:', snapshot.size)
       let total = 0
       let totalBoxes = 0
       snapshot.forEach((doc) => {
         const data = doc.data()
-        total += data.amount || 0
+        console.log('Donation:', doc.id, data)
+        const amount = data.amount || 0
+        const boxes = data.boxes || 0
+        total += amount
         // Use actual boxes count if available, otherwise calculate from amount
-        totalBoxes += data.boxes || Math.floor((data.amount || 0) / BOX_COST)
+        totalBoxes += boxes > 0 ? boxes : Math.floor(amount / BOX_COST)
       })
+      console.log('Total:', total, 'Boxes:', totalBoxes)
       setTotalDonations(total)
       setBoxCount(totalBoxes)
     }, (error) => {
-      console.log('Firebase not configured yet, using demo data')
+      console.error('Firebase error:', error)
       // Demo data for development
-      setTotalDonations(184250)
-      setBoxCount(737)
+      setTotalDonations(0)
+      setBoxCount(0)
     })
 
     return () => unsubscribe()
