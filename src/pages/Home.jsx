@@ -204,190 +204,35 @@ const Home = () => {
         </div>
       </motion.section>
 
-      {/* About Section - Combined */}
-      <motion.section 
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.8 }}
-        className="relative py-12 sm:py-16 md:py-20 overflow-hidden bg-beige-100"
-      >
-        {/* Background decorations */}
-        <div className="absolute inset-0 overflow-hidden">
-          <motion.div 
-            animate={{ scale: [1, 1.1, 1], rotate: [0, 5, 0] }}
-            transition={{ duration: 8, repeat: Infinity }}
-            className="absolute top-10 right-10 w-32 sm:w-64 h-32 sm:h-64 bg-olive-200/30 rounded-full blur-3xl"
-          />
-          <motion.div 
-            animate={{ scale: [1, 1.2, 1], rotate: [0, -5, 0] }}
-            transition={{ duration: 10, repeat: Infinity }}
-            className="absolute bottom-10 left-10 w-48 sm:w-96 h-48 sm:h-96 bg-gold-200/20 rounded-full blur-3xl"
-          />
-        </div>
-
-        <div className="container mx-auto px-4 sm:px-6 relative z-10">
-          {/* Logo and About */}
-          <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12 mb-10 sm:mb-12">
-            {/* Logo */}
-            <motion.div
-              initial={{ x: -30, opacity: 0 }}
-              whileInView={{ x: 0, opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2, duration: 0.8 }}
-              className="flex-shrink-0"
-            >
-              <motion.img 
-                src="/logo.png"
-                alt="أثر"
-                className="h-32 sm:h-40 md:h-48 w-auto"
-                whileHover={{ scale: 1.05 }}
-                transition={{ type: "spring", stiffness: 300 }}
-              />
-            </motion.div>
-
-            {/* About Text */}
-            <motion.div
-              initial={{ x: 30, opacity: 0 }}
-              whileInView={{ x: 0, opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.3, duration: 0.8 }}
-              className="text-center lg:text-right"
-            >
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-olive-700 mb-4">
-                عن المبادرة
-              </h2>
-              <p className="text-base sm:text-lg md:text-xl text-olive-600 leading-relaxed max-w-2xl">
-                مبادرة أثر هي مبادرة خيرية تهدف إلى جمع التبرعات وتوزيعها على المحتاجين 
-                في شهر رمضان المبارك. نسعى لترك أثر طيب يدوم في حياة الآخرين.
-              </p>
-            </motion.div>
-          </div>
-
-          {/* Feature Cards */}
-          <motion.div
-            initial={{ y: 30, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.4, duration: 0.8 }}
-            className="grid grid-cols-3 gap-3 sm:gap-4 md:gap-6 max-w-3xl mx-auto"
-          >
-            <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 shadow-lg text-center">
-              <div className="text-2xl sm:text-3xl mb-2">✅</div>
-              <div className="text-lg sm:text-xl md:text-2xl font-bold text-gold-500 mb-1">100%</div>
-              <p className="text-olive-600 text-xs sm:text-sm">شفافية كاملة</p>
-            </div>
-            <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 shadow-lg text-center">
-              <div className="text-2xl sm:text-3xl mb-2">🔒</div>
-              <div className="text-lg sm:text-xl md:text-2xl font-bold text-gold-500 mb-1">24/7</div>
-              <p className="text-olive-600 text-xs sm:text-sm">متابعة مستمرة</p>
-            </div>
-            <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 shadow-lg text-center">
-              <div className="text-2xl sm:text-3xl mb-2">🤝</div>
-              <div className="text-lg sm:text-xl md:text-2xl font-bold text-gold-500 mb-1">ثقة</div>
-              <p className="text-olive-600 text-xs sm:text-sm">أمان تام</p>
-            </div>
-          </motion.div>
-        </div>
-      </motion.section>
-
-      {/* Previous Year Gallery / Testimonials */}
+      {/* Box Contents Section */}
       <motion.section
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
-        className="py-12 sm:py-16 md:py-20 bg-olive-50"
+        className="py-8 sm:py-12 md:py-16 bg-beige-100"
       >
         <div className="container mx-auto px-4 sm:px-6">
           <motion.h2
             initial={{ y: -20, opacity: 0 }}
             whileInView={{ y: 0, opacity: 1 }}
             viewport={{ once: true }}
-            className="text-2xl sm:text-3xl md:text-4xl font-bold text-olive-700 text-center mb-8 sm:mb-10"
+            className="text-2xl sm:text-3xl md:text-4xl font-bold text-olive-700 text-center mb-6 sm:mb-8"
           >
-            من العام الماضي
+            محتويات الشنطة
           </motion.h2>
-
-          {/* Gallery Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 mb-8 sm:mb-10">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((item, index) => (
-              <motion.div
-                key={item}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                whileHover={{ scale: 1.05 }}
-                className="relative aspect-square bg-olive-200 rounded-xl sm:rounded-2xl overflow-hidden shadow-md cursor-pointer group"
-              >
-                {/* Placeholder - replace with actual images */}
-                <div className="absolute inset-0 bg-gradient-to-br from-olive-300 to-olive-400 flex items-center justify-center">
-                  <span className="text-4xl sm:text-5xl opacity-50">📦</span>
-                </div>
-                <div className="absolute inset-0 bg-olive-800/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <span className="text-white text-sm sm:text-base font-bold">عرض الصورة</span>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Testimonials */}
-          <div className="max-w-4xl mx-auto">
-            <h3 className="text-xl sm:text-2xl font-bold text-olive-700 text-center mb-6">
-              آراء المتبرعين
-            </h3>
-            <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
-              <motion.div
-                initial={{ x: -30, opacity: 0 }}
-                whileInView={{ x: 0, opacity: 1 }}
-                viewport={{ once: true }}
-                className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg"
-              >
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gold-100 rounded-full flex items-center justify-center">
-                    <span className="text-xl sm:text-2xl">👤</span>
-                  </div>
-                  <div>
-                    <p className="font-bold text-olive-700 text-sm sm:text-base">أحمد محمد</p>
-                    <p className="text-olive-500 text-xs sm:text-sm">متبرع</p>
-                  </div>
-                </div>
-                <p className="text-olive-600 text-sm sm:text-base leading-relaxed">
-                  "تجربة رائعة مع مبادرة أثر، شفافية كاملة ومتابعة مستمرة. سعيد إني كنت جزء من هذا العمل الخيري."
-                </p>
-                <div className="flex gap-1 mt-3">
-                  {[1,2,3,4,5].map(star => (
-                    <span key={star} className="text-gold-500">⭐</span>
-                  ))}
-                </div>
-              </motion.div>
-
-              <motion.div
-                initial={{ x: 30, opacity: 0 }}
-                whileInView={{ x: 0, opacity: 1 }}
-                viewport={{ once: true }}
-                className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg"
-              >
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gold-100 rounded-full flex items-center justify-center">
-                    <span className="text-xl sm:text-2xl">👤</span>
-                  </div>
-                  <div>
-                    <p className="font-bold text-olive-700 text-sm sm:text-base">سارة أحمد</p>
-                    <p className="text-olive-500 text-xs sm:text-sm">متبرعة</p>
-                  </div>
-                </div>
-                <p className="text-olive-600 text-sm sm:text-base leading-relaxed">
-                  "الحمد لله، المبادرة وصلت لناس محتاجة فعلاً. شكراً لفريق أثر على المجهود الرائع."
-                </p>
-                <div className="flex gap-1 mt-3">
-                  {[1,2,3,4,5].map(star => (
-                    <span key={star} className="text-gold-500">⭐</span>
-                  ))}
-                </div>
-              </motion.div>
-            </div>
-          </div>
+          <motion.div
+            initial={{ y: 30, opacity: 0 }}
+            whileInView={{ y: 0, opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+            className="max-w-2xl mx-auto"
+          >
+            <img 
+              src="/box-contents.png" 
+              alt="محتويات شنطة رمضان"
+              className="w-full h-auto rounded-2xl shadow-xl"
+            />
+          </motion.div>
         </div>
       </motion.section>
 
