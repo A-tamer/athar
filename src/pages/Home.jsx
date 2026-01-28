@@ -179,7 +179,7 @@ const Home = () => {
               />
             </div>
             <div className="flex justify-between mt-2 text-beige-200 text-xs sm:text-sm">
-              <span>0 شنطة</span>
+              <span>{boxCount} شنطة</span>
               <span>الهدف: 500 شنطة</span>
             </div>
           </motion.div>
