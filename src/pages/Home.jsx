@@ -261,6 +261,7 @@ const Home = () => {
           <p className="text-base sm:text-lg mb-1 sm:mb-2">أثر © 2026</p>
           <p className="text-xs sm:text-sm opacity-70 mb-2">جميع الحقوق محفوظة</p>
           <p className="text-xs sm:text-sm opacity-50">Made by Eng/ Ahmed Tamer</p>
+          <p className="text-xs sm:text-sm opacity-50 mt-1">For business inquiries: ahmedtwafa@gmail.com</p>
         </div>
       </footer>
     </div>
