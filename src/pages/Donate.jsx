@@ -24,15 +24,6 @@ const paymentMethods = [
     instructions: 'اضغط على الزر للتحويل عبر Telda',
     details: '@ahmeddtamerr',
     link: 'https://telda.me/ahmeddtamerr'
-  },
-  {
-    id: 'bank',
-    name: 'تحويل بنكي',
-    icon: '🏦',
-    isImage: false,
-    instructions: 'قم بالتحويل إلى الحساب البنكي التالي',
-    details: 'البنك الأهلي المصري\nرقم الحساب: 1234567890123',
-    link: '#'
   }
 ]
 
@@ -163,7 +154,7 @@ const Donate = () => {
     <div className="min-h-screen bg-beige-100">
       <Navbar />
       
-      <div className="container mx-auto px-4 sm:px-6 pt-20 sm:pt-24 pb-8 sm:py-12">
+      <div className="container mx-auto px-4 sm:px-6 pt-16 sm:pt-20 pb-8 sm:py-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

@@ -20,16 +20,20 @@ const Home = () => {
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       let total = 0
+      let totalBoxes = 0
       snapshot.forEach((doc) => {
-        total += doc.data().amount || 0
+        const data = doc.data()
+        total += data.amount || 0
+        // Use actual boxes count if available, otherwise calculate from amount
+        totalBoxes += data.boxes || Math.floor((data.amount || 0) / BOX_COST)
       })
       setTotalDonations(total)
-      setBoxCount(Math.floor(total / BOX_COST))
+      setBoxCount(totalBoxes)
     }, (error) => {
       console.log('Firebase not configured yet, using demo data')
       // Demo data for development
       setTotalDonations(184250)
-      setBoxCount(1228)
+      setBoxCount(737)
     })
 
     return () => unsubscribe()
@@ -47,7 +51,7 @@ const Home = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.8 }}
-        className="pt-20 sm:pt-24 md:pt-28 pb-10 sm:pb-12 md:pb-16 bg-olive-700 relative overflow-hidden"
+        className="pt-16 sm:pt-20 md:pt-24 pb-10 sm:pb-12 md:pb-16 bg-olive-700 relative overflow-hidden"
       >
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-10">

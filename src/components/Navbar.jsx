@@ -29,15 +29,15 @@ const Navbar = () => {
       showBackground ? 'bg-beige-100/95 backdrop-blur-md shadow-md' : 'bg-beige-100/80 backdrop-blur-sm'
     }`}>
       <div className="container mx-auto px-4 sm:px-6">
-        <div className="flex items-center justify-between h-16 sm:h-20 md:h-24">
+        <div className="flex items-center justify-between h-14 sm:h-16 md:h-20">
           {/* Logo */}
-          <Link to="/">
+          <Link to="/" className="flex items-center">
             <motion.img 
               src="/logo.png"
               alt="أثر"
               whileHover={{ scale: 1.1 }}
               transition={{ type: "spring", stiffness: 300, damping: 15 }}
-              className="h-12 sm:h-16 md:h-20 w-auto cursor-pointer"
+              className="h-10 sm:h-12 md:h-16 w-auto cursor-pointer object-contain"
             />
           </Link>
 
