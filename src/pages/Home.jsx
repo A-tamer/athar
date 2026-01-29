@@ -9,7 +9,7 @@ import Navbar from '../components/Navbar'
 const Home = () => {
   const [totalDonations, setTotalDonations] = useState(0)
   const [boxCount, setBoxCount] = useState(0)
-  const BOX_COST = 250 // Cost per شنطة in EGP
+  const BOX_COST = 300 // Cost per شنطة in EGP
 
   useEffect(() => {
     // Listen to approved donations

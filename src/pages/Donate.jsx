@@ -27,7 +27,7 @@ const paymentMethods = [
   }
 ]
 
-const BOX_COST = 250 // Cost per شنطة in EGP
+const BOX_COST = 300 // Cost per شنطة in EGP
 
 const Donate = () => {
   const navigate = useNavigate()

@@ -15,7 +15,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { onAuthStateChanged, signOut } from 'firebase/auth'
 import { db, auth, storage } from '../lib/firebase'
 
-const BOX_COST = 250
+const BOX_COST = 300
 
 const Admin = () => {
   const navigate = useNavigate()
