@@ -21,60 +21,52 @@ const Admin = () => {
   const [donations, setDonations] = useState([])
   const [selectedImage, setSelectedImage] = useState(null)
   const [manualAmount, setManualAmount] = useState('')
+  const [manualBoxes, setManualBoxes] = useState('')
   const [filter, setFilter] = useState('all')
-  const [stats, setStats] = useState({ total: 0, pending: 0, approved: 0 })
-
-  // Demo data for development
-  const demoData = [
-    { id: '1', amount: 500, paymentMethod: 'InstaPay', status: 'pending', createdAt: new Date(), screenshotURL: 'https://via.placeholder.com/300x400' },
-    { id: '2', amount: 1000, paymentMethod: 'Vodafone Cash', status: 'approved', createdAt: new Date(), screenshotURL: 'https://via.placeholder.com/300x400' },
-    { id: '3', amount: 150, paymentMethod: 'تحويل بنكي', status: 'pending', createdAt: new Date(), screenshotURL: 'https://via.placeholder.com/300x400' },
-    { id: '4', amount: 300, type: 'manual', status: 'approved', createdAt: new Date() },
-  ]
+  const [stats, setStats] = useState({ total: 0, pending: 0, approved: 0, boxes: 0 })
 
   useEffect(() => {
     const unsubAuth = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
+        // User is authenticated
         setUser(currentUser)
+        setLoading(false)
       } else {
-        // For demo, allow access without auth
-        setUser({ email: 'admin@demo.com' })
+        // Not logged in, redirect to login
+        navigate('/login')
       }
-      setLoading(false)
     })
 
-    // Subscribe to donations
-    try {
-      const q = query(collection(db, 'donations'), orderBy('createdAt', 'desc'))
-      const unsubDonations = onSnapshot(q, (snapshot) => {
-        const data = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          createdAt: doc.data().createdAt?.toDate()
-        }))
-        setDonations(data)
-        calculateStats(data)
-      }, () => {
-        // Firebase not configured, use demo data
-        setDonations(demoData)
-        calculateStats(demoData)
-      })
+    return () => unsubAuth()
+  }, [navigate])
 
-      return () => {
-        unsubAuth()
-        unsubDonations()
-      }
-    } catch (error) {
-      setDonations(demoData)
-      calculateStats(demoData)
-    }
-  }, [])
+  useEffect(() => {
+    if (!user) return
+
+    // Subscribe to donations
+    const q = query(collection(db, 'donations'), orderBy('createdAt', 'desc'))
+    const unsubDonations = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate()
+      }))
+      setDonations(data)
+      calculateStats(data)
+    }, (error) => {
+      console.error('Error fetching donations:', error)
+    })
+
+    return () => unsubDonations()
+  }, [user])
 
   const calculateStats = (data) => {
-    const total = data.filter(d => d.status === 'approved').reduce((acc, d) => acc + d.amount, 0)
+    const approvedDonations = data.filter(d => d.status === 'approved')
+    const total = approvedDonations.reduce((acc, d) => acc + (d.amount || 0), 0)
+    const boxes = approvedDonations.reduce((acc, d) => acc + (d.boxes || 0), 0)
     const pending = data.filter(d => d.status === 'pending').length
-    const approved = data.filter(d => d.status === 'approved').length
-    setStats({ total, pending, approved })
+    const approved = approvedDonations.length
+    setStats({ total, pending, approved, boxes })
   }
 
   const handleStatusChange = async (donationId, newStatus) => {

@@ -21,11 +21,16 @@ const Login = () => {
       navigate('/admin')
     } catch (err) {
       console.error('Login error:', err)
-      // For demo purposes, allow access anyway
-      if (email && password) {
-        navigate('/admin')
+      if (err.code === 'auth/user-not-found') {
+        setError('البريد الإلكتروني غير مسجل')
+      } else if (err.code === 'auth/wrong-password') {
+        setError('كلمة المرور غير صحيحة')
+      } else if (err.code === 'auth/invalid-email') {
+        setError('البريد الإلكتروني غير صالح')
+      } else if (err.code === 'auth/invalid-credential') {
+        setError('بيانات الدخول غير صحيحة')
       } else {
-        setError('يرجى إدخال البريد الإلكتروني وكلمة المرور')
+        setError('حدث خطأ، يرجى المحاولة مرة أخرى')
       }
     }
     setLoading(false)
@@ -100,13 +105,6 @@ const Login = () => {
           >
             العودة للرئيسية
           </Link>
-        </div>
-
-        {/* Demo hint */}
-        <div className="mt-6 p-4 bg-gold-50 rounded-xl text-center">
-          <p className="text-sm text-gold-700">
-            للتجربة: أدخل أي بريد وكلمة مرور
-          </p>
         </div>
       </motion.div>
     </div>
