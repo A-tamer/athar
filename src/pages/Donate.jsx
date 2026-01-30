@@ -13,8 +13,8 @@ const paymentMethods = [
     icon: '/instapay-logo.png',
     isImage: true,
     instructions: 'اضغط على الزر للتحويل عبر InstaPay',
-    details: 'ahmed_tamer@instapay',
-    link: 'https://ipn.eg/S/ahmed_tamer/instapay/5bqnfX'
+    details: 'ahmedgharib11112@instapay',
+    link: 'https://ipn.eg/S/ahmedgharib11112/instapay/0ghllN'
   },
   {
     id: 'telda',
