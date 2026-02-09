@@ -345,11 +345,24 @@ const Inventory = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="bg-white rounded-2xl p-4 shadow-lg"
+            className="bg-white rounded-2xl p-4 shadow-lg group relative"
           >
             <h3 className="text-olive-600 text-sm mb-1">تكلفة الشنطة</h3>
             <p className="text-3xl font-bold text-olive-700">{stats.costPerBox.toFixed(0)}</p>
-            <p className="text-olive-500 text-xs">جنيه</p>
+            <p className="text-olive-500 text-xs">جنيه — مرر للتفاصيل</p>
+            <div className="absolute left-0 right-0 top-full mt-2 bg-olive-800 text-white p-3 rounded-xl text-xs opacity-0 group-hover:opacity-100 transition-opacity z-20 pointer-events-none shadow-xl">
+              <p className="font-bold mb-2 border-b border-olive-600 pb-1">تفاصيل تكلفة الشنطة:</p>
+              {items.map(item => (
+                <div key={item.id} className="flex justify-between py-0.5">
+                  <span>{item.name}</span>
+                  <span>{item.quantityPerBox} × {item.costPerUnit || 0} = {(item.quantityPerBox * (item.costPerUnit || 0)).toFixed(1)} جنيه</span>
+                </div>
+              ))}
+              <div className="flex justify-between pt-1 mt-1 border-t border-olive-600 font-bold">
+                <span>الإجمالي</span>
+                <span>{stats.costPerBox.toFixed(1)} جنيه</span>
+              </div>
+            </div>
           </motion.div>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
