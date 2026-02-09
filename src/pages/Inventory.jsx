@@ -28,6 +28,8 @@ const DEFAULT_ITEMS = [
   { id: 'tomato', name: 'صلصة', nameEn: 'Tomato Paste', quantityPerBox: 0.3, unit: 'كجم', costPerUnit: 0 },
   { id: 'tea', name: 'شاي', nameEn: 'Tea', quantityPerBox: 40, unit: 'جم', costPerUnit: 0 },
   { id: 'salt', name: 'ملح', nameEn: 'Salt', quantityPerBox: 1, unit: 'كيس', costPerUnit: 0 },
+  { id: 'bag', name: 'شنطة (كيس)', nameEn: 'Bag', quantityPerBox: 1, unit: 'قطعة', costPerUnit: 0 },
+  { id: 'box', name: 'كرتونة', nameEn: 'Box', quantityPerBox: 1, unit: 'قطعة', costPerUnit: 0 },
 ]
 
 const TARGET_BOXES = 500
