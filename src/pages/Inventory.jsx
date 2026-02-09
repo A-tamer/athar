@@ -71,13 +71,18 @@ const Inventory = () => {
     // Subscribe to inventory items
     const itemsQuery = query(collection(db, 'inventoryItems'))
     const unsubItems = onSnapshot(itemsQuery, (snapshot) => {
+      console.log('Inventory items snapshot:', snapshot.size)
       if (snapshot.empty) {
         // Initialize with default items
+        console.log('Initializing default items...')
         initializeItems()
       } else {
         const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+        console.log('Loaded items:', data)
         setItems(data)
       }
+    }, (error) => {
+      console.error('Error fetching inventory items:', error)
     })
 
     // Subscribe to transactions
@@ -89,6 +94,8 @@ const Inventory = () => {
         createdAt: doc.data().createdAt?.toDate()
       }))
       setTransactions(data)
+    }, (error) => {
+      console.error('Error fetching transactions:', error)
     })
 
     return () => {
@@ -98,14 +105,23 @@ const Inventory = () => {
   }, [user])
 
   const initializeItems = async () => {
-    for (const item of DEFAULT_ITEMS) {
-      await addDoc(collection(db, 'inventoryItems'), {
-        ...item,
-        currentStock: 0,
-        minStockAlert: item.quantityPerBox * 50,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      })
+    try {
+      for (const item of DEFAULT_ITEMS) {
+        const docRef = await addDoc(collection(db, 'inventoryItems'), {
+          name: item.name,
+          nameEn: item.nameEn,
+          quantityPerBox: item.quantityPerBox,
+          unit: item.unit,
+          costPerUnit: item.costPerUnit,
+          currentStock: 0,
+          minStockAlert: item.quantityPerBox * 50,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        })
+        console.log('Created item:', item.name, docRef.id)
+      }
+    } catch (error) {
+      console.error('Error initializing items:', error)
     }
   }
 
