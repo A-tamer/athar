@@ -190,7 +190,15 @@ const Admin = () => {
       {/* Header */}
       <header className="bg-olive-700 text-white py-4 px-6">
         <div className="container mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold">لوحة التحكم - أثر</h1>
+          <div className="flex items-center gap-4">
+            <h1 className="text-2xl font-bold">لوحة التحكم - أثر</h1>
+            <button
+              onClick={() => navigate('/inventory')}
+              className="bg-olive-600 hover:bg-olive-500 px-3 py-1 rounded-lg text-sm"
+            >
+              📦 المخزون
+            </button>
+          </div>
           <div className="flex items-center gap-4">
             <span className="text-beige-200">{user?.email}</span>
             <button
