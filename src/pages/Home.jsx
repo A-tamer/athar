@@ -9,7 +9,28 @@ import Navbar from '../components/Navbar'
 const Home = () => {
   const [totalDonations, setTotalDonations] = useState(0)
   const [boxCount, setBoxCount] = useState(0)
-  const BOX_COST = 300 // Cost per شنطة in EGP
+  const [costPerBox, setCostPerBox] = useState(0)
+
+  useEffect(() => {
+    // Listen to inventory items to get real cost per box
+    const unsubInventory = onSnapshot(
+      collection(db, 'inventoryItems'),
+      (snapshot) => {
+        let cost = 0
+        snapshot.forEach((doc) => {
+          const data = doc.data()
+          cost += (data.quantityPerBox || 0) * (data.costPerUnit || 0)
+        })
+        console.log('Cost per box from inventory:', cost)
+        setCostPerBox(cost)
+      },
+      (error) => {
+        console.error('Error fetching inventory:', error)
+      }
+    )
+
+    return () => unsubInventory()
+  }, [])
 
   useEffect(() => {
     // Listen to approved donations
@@ -21,28 +42,28 @@ const Home = () => {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       console.log('Approved donations count:', snapshot.size)
       let total = 0
-      let totalBoxes = 0
       snapshot.forEach((doc) => {
         const data = doc.data()
-        console.log('Donation:', doc.id, data)
-        const amount = data.amount || 0
-        const boxes = data.boxes || 0
-        total += amount
-        // Use actual boxes count if available, otherwise calculate from amount
-        totalBoxes += boxes > 0 ? boxes : Math.floor(amount / BOX_COST)
+        total += data.amount || 0
       })
-      console.log('Total:', total, 'Boxes:', totalBoxes)
+      console.log('Total donations:', total)
       setTotalDonations(total)
-      setBoxCount(totalBoxes)
     }, (error) => {
       console.error('Firebase error:', error)
-      // Demo data for development
       setTotalDonations(0)
-      setBoxCount(0)
     })
 
     return () => unsubscribe()
   }, [])
+
+  // Calculate boxes from total donations / cost per box from inventory
+  useEffect(() => {
+    if (costPerBox > 0 && totalDonations > 0) {
+      setBoxCount(Math.floor(totalDonations / costPerBox))
+    } else {
+      setBoxCount(0)
+    }
+  }, [totalDonations, costPerBox])
 
   // Calculate estimated families (1 box per family)
   const familiesSupported = boxCount
