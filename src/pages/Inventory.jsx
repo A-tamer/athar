@@ -17,17 +17,19 @@ import { onAuthStateChanged, signOut } from 'firebase/auth'
 import { db, auth } from '../lib/firebase'
 
 // Default box items configuration
+// costPerUnit = the price you pay when buying (per kg or per piece)
+// quantityPerBox = how much of that unit goes into one box
 const DEFAULT_ITEMS = [
-  { id: 'rice', name: 'أرز مصري', nameEn: 'Rice', quantityPerBox: 2, unit: 'كجم', costPerUnit: 0 },
-  { id: 'sugar', name: 'سكر أبيض', nameEn: 'Sugar', quantityPerBox: 1, unit: 'كجم', costPerUnit: 0 },
-  { id: 'oil', name: 'زيت خليط', nameEn: 'Oil', quantityPerBox: 1, unit: 'لتر', costPerUnit: 0 },
-  { id: 'pasta', name: 'مكرونة 350 جم', nameEn: 'Pasta', quantityPerBox: 3, unit: 'كيس', costPerUnit: 0 },
-  { id: 'fava', name: 'فول', nameEn: 'Fava Beans', quantityPerBox: 1, unit: 'كجم', costPerUnit: 0 },
-  { id: 'lentils', name: 'عدس', nameEn: 'Lentils', quantityPerBox: 0.5, unit: 'كجم', costPerUnit: 0 },
-  { id: 'dates', name: 'تمر', nameEn: 'Dates', quantityPerBox: 0.7, unit: 'كجم', costPerUnit: 0 },
-  { id: 'tomato', name: 'صلصة', nameEn: 'Tomato Paste', quantityPerBox: 0.3, unit: 'كجم', costPerUnit: 0 },
-  { id: 'tea', name: 'شاي', nameEn: 'Tea', quantityPerBox: 40, unit: 'جم', costPerUnit: 0 },
-  { id: 'salt', name: 'ملح', nameEn: 'Salt', quantityPerBox: 1, unit: 'كيس', costPerUnit: 0 },
+  { id: 'rice', name: 'أرز', nameEn: 'Rice', quantityPerBox: 2, unit: 'كجم', costPerUnit: 0, costLabel: 'سعر الكيلو' },
+  { id: 'sugar', name: 'سكر', nameEn: 'Sugar', quantityPerBox: 1, unit: 'كجم', costPerUnit: 0, costLabel: 'سعر الكيلو' },
+  { id: 'oil', name: 'زيت', nameEn: 'Oil', quantityPerBox: 1, unit: 'قطعة', costPerUnit: 0, costLabel: 'سعر القطعة' },
+  { id: 'pasta', name: 'مكرونة', nameEn: 'Pasta', quantityPerBox: 3, unit: 'قطعة', costPerUnit: 0, costLabel: 'سعر القطعة' },
+  { id: 'fava', name: 'فول', nameEn: 'Fava Beans', quantityPerBox: 1, unit: 'كجم', costPerUnit: 0, costLabel: 'سعر الكيلو' },
+  { id: 'lentils', name: 'عدس', nameEn: 'Lentils', quantityPerBox: 0.5, unit: 'كجم', costPerUnit: 0, costLabel: 'سعر الكيلو' },
+  { id: 'dates', name: 'تمر', nameEn: 'Dates', quantityPerBox: 0.7, unit: 'كجم', costPerUnit: 0, costLabel: 'سعر الكيلو' },
+  { id: 'tomato', name: 'صلصة', nameEn: 'Tomato Paste', quantityPerBox: 1, unit: 'قطعة', costPerUnit: 0, costLabel: 'سعر القطعة' },
+  { id: 'tea', name: 'شاي', nameEn: 'Tea', quantityPerBox: 1, unit: 'قطعة', costPerUnit: 0, costLabel: 'سعر القطعة' },
+  { id: 'salt', name: 'ملح', nameEn: 'Salt', quantityPerBox: 1, unit: 'قطعة', costPerUnit: 0, costLabel: 'سعر القطعة' },
 ]
 
 const TARGET_BOXES = 500
@@ -113,6 +115,7 @@ const Inventory = () => {
           quantityPerBox: item.quantityPerBox,
           unit: item.unit,
           costPerUnit: item.costPerUnit,
+          costLabel: item.costLabel,
           currentStock: 0,
           minStockAlert: item.quantityPerBox * 50,
           createdAt: serverTimestamp(),
@@ -450,7 +453,8 @@ const Inventory = () => {
                           {item.currentStock || 0} {item.unit}
                         </td>
                         <td className="px-4 py-3 text-olive-600">
-                          {item.costPerUnit || 0} جنيه
+                          <div>{item.costPerUnit || 0} جنيه</div>
+                          <div className="text-xs text-olive-400">{item.costLabel || item.unit}</div>
                         </td>
                         <td className="px-4 py-3 text-olive-600">
                           {((item.currentStock || 0) * (item.costPerUnit || 0)).toLocaleString()} جنيه
@@ -575,25 +579,31 @@ const Inventory = () => {
                 </div>
                 
                 <div>
-                  <label className="block text-olive-600 text-sm mb-1">الكمية *</label>
+                  <label className="block text-olive-600 text-sm mb-1">
+                    الكمية * {selectedItem && items.find(i => i.id === selectedItem) && (
+                      <span className="text-olive-400">({items.find(i => i.id === selectedItem).unit})</span>
+                    )}
+                  </label>
                   <input
                     type="number"
                     step="0.1"
                     value={quantity}
                     onChange={(e) => setQuantity(e.target.value)}
-                    placeholder="مثال: 50"
+                    placeholder={selectedItem && items.find(i => i.id === selectedItem)?.unit === 'كجم' ? 'مثال: 50 كجم' : 'مثال: 50 قطعة'}
                     className="w-full py-3 px-4 border-2 border-beige-300 rounded-xl focus:border-olive-500 focus:outline-none"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-olive-600 text-sm mb-1">سعر الوحدة (جنيه)</label>
+                  <label className="block text-olive-600 text-sm mb-1">
+                    {selectedItem && items.find(i => i.id === selectedItem)?.costLabel || 'سعر الوحدة'} (جنيه)
+                  </label>
                   <input
                     type="number"
                     step="0.01"
                     value={costPerUnit}
                     onChange={(e) => setCostPerUnit(e.target.value)}
-                    placeholder="مثال: 25"
+                    placeholder={selectedItem && items.find(i => i.id === selectedItem)?.unit === 'كجم' ? 'سعر الكيلو' : 'سعر القطعة'}
                     className="w-full py-3 px-4 border-2 border-beige-300 rounded-xl focus:border-olive-500 focus:outline-none"
                   />
                 </div>
@@ -722,14 +732,20 @@ const Inventory = () => {
               </h2>
               
               <div>
-                <label className="block text-olive-600 text-sm mb-1">سعر الوحدة (جنيه)</label>
+                <label className="block text-olive-600 text-sm mb-1">
+                  {showEditItem.costLabel || 'سعر الوحدة'} (جنيه)
+                </label>
                 <input
                   type="number"
                   step="0.01"
                   value={costPerUnit}
                   onChange={(e) => setCostPerUnit(e.target.value)}
+                  placeholder={showEditItem.costLabel || 'سعر الوحدة'}
                   className="w-full py-3 px-4 border-2 border-beige-300 rounded-xl focus:border-olive-500 focus:outline-none"
                 />
+                <p className="text-xs text-olive-400 mt-1">
+                  الشنطة تحتاج {showEditItem.quantityPerBox} {showEditItem.unit}
+                </p>
               </div>
               
               <div className="flex gap-3 mt-6">
