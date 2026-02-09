@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
@@ -54,6 +54,9 @@ const Inventory = () => {
   const [supplier, setSupplier] = useState('')
   const [notes, setNotes] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  
+  // Prevent multiple initializations
+  const isInitializing = useRef(false)
 
   useEffect(() => {
     const unsubAuth = onAuthStateChanged(auth, (currentUser) => {
@@ -74,11 +77,14 @@ const Inventory = () => {
     const itemsQuery = query(collection(db, 'inventoryItems'))
     const unsubItems = onSnapshot(itemsQuery, (snapshot) => {
       console.log('Inventory items snapshot:', snapshot.size)
-      if (snapshot.empty) {
-        // Initialize with default items
+      if (snapshot.empty && !isInitializing.current) {
+        // Initialize with default items (only if not already initializing)
         console.log('Initializing default items...')
-        initializeItems()
-      } else {
+        isInitializing.current = true
+        initializeItems().finally(() => {
+          isInitializing.current = false
+        })
+      } else if (!snapshot.empty) {
         const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
         console.log('Loaded items:', data)
         setItems(data)
@@ -415,12 +421,11 @@ const Inventory = () => {
               if (window.confirm('هل تريد إعادة ضبط المنتجات للقيم الافتراضية؟ سيتم حذف جميع بيانات المخزون!')) {
                 setSubmitting(true)
                 try {
-                  // Delete all existing items
+                  // Delete all existing items - onSnapshot will auto-reinitialize when empty
                   for (const item of items) {
                     await deleteDoc(doc(db, 'inventoryItems', item.id))
                   }
-                  // Reinitialize with defaults
-                  await initializeItems()
+                  // onSnapshot listener will detect empty collection and call initializeItems()
                   alert('تم إعادة ضبط المنتجات بنجاح')
                 } catch (error) {
                   console.error('Error resetting items:', error)
