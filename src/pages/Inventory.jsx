@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
@@ -17,19 +17,17 @@ import { onAuthStateChanged, signOut } from 'firebase/auth'
 import { db, auth } from '../lib/firebase'
 
 // Default box items configuration
-// costPerUnit = the price you pay when buying (per kg or per piece)
-// quantityPerBox = how much of that unit goes into one box
 const DEFAULT_ITEMS = [
-  { id: 'rice', name: 'أرز', nameEn: 'Rice', quantityPerBox: 2, unit: 'كجم', costPerUnit: 0, costLabel: 'سعر الكيلو' },
-  { id: 'sugar', name: 'سكر', nameEn: 'Sugar', quantityPerBox: 1, unit: 'كجم', costPerUnit: 0, costLabel: 'سعر الكيلو' },
-  { id: 'oil', name: 'زيت', nameEn: 'Oil', quantityPerBox: 1, unit: 'قطعة', costPerUnit: 0, costLabel: 'سعر القطعة' },
-  { id: 'pasta', name: 'مكرونة', nameEn: 'Pasta', quantityPerBox: 3, unit: 'قطعة', costPerUnit: 0, costLabel: 'سعر القطعة' },
-  { id: 'fava', name: 'فول', nameEn: 'Fava Beans', quantityPerBox: 1, unit: 'كجم', costPerUnit: 0, costLabel: 'سعر الكيلو' },
-  { id: 'lentils', name: 'عدس', nameEn: 'Lentils', quantityPerBox: 0.5, unit: 'كجم', costPerUnit: 0, costLabel: 'سعر الكيلو' },
-  { id: 'dates', name: 'تمر', nameEn: 'Dates', quantityPerBox: 0.7, unit: 'كجم', costPerUnit: 0, costLabel: 'سعر الكيلو' },
-  { id: 'tomato', name: 'صلصة', nameEn: 'Tomato Paste', quantityPerBox: 1, unit: 'قطعة', costPerUnit: 0, costLabel: 'سعر القطعة' },
-  { id: 'tea', name: 'شاي', nameEn: 'Tea', quantityPerBox: 1, unit: 'قطعة', costPerUnit: 0, costLabel: 'سعر القطعة' },
-  { id: 'salt', name: 'ملح', nameEn: 'Salt', quantityPerBox: 1, unit: 'قطعة', costPerUnit: 0, costLabel: 'سعر القطعة' },
+  { id: 'rice', name: 'أرز مصري', nameEn: 'Rice', quantityPerBox: 2, unit: 'كجم', costPerUnit: 0 },
+  { id: 'sugar', name: 'سكر أبيض', nameEn: 'Sugar', quantityPerBox: 1, unit: 'كجم', costPerUnit: 0 },
+  { id: 'oil', name: 'زيت خليط', nameEn: 'Oil', quantityPerBox: 1, unit: 'لتر', costPerUnit: 0 },
+  { id: 'pasta', name: 'مكرونة 350 جم', nameEn: 'Pasta', quantityPerBox: 3, unit: 'كيس', costPerUnit: 0 },
+  { id: 'fava', name: 'فول', nameEn: 'Fava Beans', quantityPerBox: 1, unit: 'كجم', costPerUnit: 0 },
+  { id: 'lentils', name: 'عدس', nameEn: 'Lentils', quantityPerBox: 0.5, unit: 'كجم', costPerUnit: 0 },
+  { id: 'dates', name: 'تمر', nameEn: 'Dates', quantityPerBox: 0.7, unit: 'كجم', costPerUnit: 0 },
+  { id: 'tomato', name: 'صلصة', nameEn: 'Tomato Paste', quantityPerBox: 0.3, unit: 'كجم', costPerUnit: 0 },
+  { id: 'tea', name: 'شاي', nameEn: 'Tea', quantityPerBox: 40, unit: 'جم', costPerUnit: 0 },
+  { id: 'salt', name: 'ملح', nameEn: 'Salt', quantityPerBox: 1, unit: 'كيس', costPerUnit: 0 },
 ]
 
 const TARGET_BOXES = 500
@@ -54,9 +52,6 @@ const Inventory = () => {
   const [supplier, setSupplier] = useState('')
   const [notes, setNotes] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  
-  // Prevent multiple initializations
-  const isInitializing = useRef(false)
 
   useEffect(() => {
     const unsubAuth = onAuthStateChanged(auth, (currentUser) => {
@@ -77,14 +72,11 @@ const Inventory = () => {
     const itemsQuery = query(collection(db, 'inventoryItems'))
     const unsubItems = onSnapshot(itemsQuery, (snapshot) => {
       console.log('Inventory items snapshot:', snapshot.size)
-      if (snapshot.empty && !isInitializing.current) {
-        // Initialize with default items (only if not already initializing)
+      if (snapshot.empty) {
+        // Initialize with default items
         console.log('Initializing default items...')
-        isInitializing.current = true
-        initializeItems().finally(() => {
-          isInitializing.current = false
-        })
-      } else if (!snapshot.empty) {
+        initializeItems()
+      } else {
         const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
         console.log('Loaded items:', data)
         setItems(data)
@@ -114,15 +106,6 @@ const Inventory = () => {
 
   const initializeItems = async () => {
     try {
-      // Double-check the collection is truly empty before adding
-      const { getDocs } = await import('firebase/firestore')
-      const existingDocs = await getDocs(collection(db, 'inventoryItems'))
-      if (!existingDocs.empty) {
-        console.log('Items already exist, skipping initialization')
-        return
-      }
-      
-      console.log('Creating default items...')
       for (const item of DEFAULT_ITEMS) {
         const docRef = await addDoc(collection(db, 'inventoryItems'), {
           name: item.name,
@@ -130,7 +113,6 @@ const Inventory = () => {
           quantityPerBox: item.quantityPerBox,
           unit: item.unit,
           costPerUnit: item.costPerUnit,
-          costLabel: item.costLabel,
           currentStock: 0,
           minStockAlert: item.quantityPerBox * 50,
           createdAt: serverTimestamp(),
@@ -363,21 +345,11 @@ const Inventory = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="bg-white rounded-2xl p-4 shadow-lg group relative"
+            className="bg-white rounded-2xl p-4 shadow-lg"
           >
             <h3 className="text-olive-600 text-sm mb-1">تكلفة الشنطة</h3>
             <p className="text-3xl font-bold text-olive-700">{stats.costPerBox.toFixed(0)}</p>
-            <p className="text-olive-500 text-xs">جنيه (اضغط للتفاصيل)</p>
-            {/* Cost breakdown tooltip */}
-            <div className="absolute left-0 right-0 top-full mt-2 bg-olive-800 text-white p-3 rounded-xl text-xs opacity-0 group-hover:opacity-100 transition-opacity z-10 pointer-events-none">
-              <p className="font-bold mb-2">تفاصيل التكلفة:</p>
-              {items.map(item => (
-                <div key={item.id} className="flex justify-between">
-                  <span>{item.name}</span>
-                  <span>{item.quantityPerBox} × {item.costPerUnit || 0} = {(item.quantityPerBox * (item.costPerUnit || 0)).toFixed(1)}</span>
-                </div>
-              ))}
-            </div>
+            <p className="text-olive-500 text-xs">جنيه</p>
           </motion.div>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -406,7 +378,7 @@ const Inventory = () => {
         )}
 
         {/* Action Buttons */}
-        <div className="flex gap-4 mb-8 flex-wrap">
+        <div className="flex gap-4 mb-8">
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -422,31 +394,6 @@ const Inventory = () => {
             className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-xl"
           >
             📦 تجهيز شنط
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={async () => {
-              if (window.confirm('هل تريد إعادة ضبط المنتجات للقيم الافتراضية؟ سيتم حذف جميع بيانات المخزون!')) {
-                setSubmitting(true)
-                try {
-                  // Delete all existing items - onSnapshot will auto-reinitialize when empty
-                  for (const item of items) {
-                    await deleteDoc(doc(db, 'inventoryItems', item.id))
-                  }
-                  // onSnapshot listener will detect empty collection and call initializeItems()
-                  alert('تم إعادة ضبط المنتجات بنجاح')
-                } catch (error) {
-                  console.error('Error resetting items:', error)
-                  alert('حدث خطأ: ' + error.message)
-                }
-                setSubmitting(false)
-              }
-            }}
-            disabled={submitting}
-            className="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-xl"
-          >
-            🔄 إعادة ضبط المنتجات
           </motion.button>
         </div>
 
@@ -503,8 +450,7 @@ const Inventory = () => {
                           {item.currentStock || 0} {item.unit}
                         </td>
                         <td className="px-4 py-3 text-olive-600">
-                          <div>{item.costPerUnit || 0} جنيه</div>
-                          <div className="text-xs text-olive-400">{item.costLabel || item.unit}</div>
+                          {item.costPerUnit || 0} جنيه
                         </td>
                         <td className="px-4 py-3 text-olive-600">
                           {((item.currentStock || 0) * (item.costPerUnit || 0)).toLocaleString()} جنيه
@@ -629,31 +575,25 @@ const Inventory = () => {
                 </div>
                 
                 <div>
-                  <label className="block text-olive-600 text-sm mb-1">
-                    الكمية * {selectedItem && items.find(i => i.id === selectedItem) && (
-                      <span className="text-olive-400">({items.find(i => i.id === selectedItem).unit})</span>
-                    )}
-                  </label>
+                  <label className="block text-olive-600 text-sm mb-1">الكمية *</label>
                   <input
                     type="number"
                     step="0.1"
                     value={quantity}
                     onChange={(e) => setQuantity(e.target.value)}
-                    placeholder={selectedItem && items.find(i => i.id === selectedItem)?.unit === 'كجم' ? 'مثال: 50 كجم' : 'مثال: 50 قطعة'}
+                    placeholder="مثال: 50"
                     className="w-full py-3 px-4 border-2 border-beige-300 rounded-xl focus:border-olive-500 focus:outline-none"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-olive-600 text-sm mb-1">
-                    {selectedItem && items.find(i => i.id === selectedItem)?.costLabel || 'سعر الوحدة'} (جنيه)
-                  </label>
+                  <label className="block text-olive-600 text-sm mb-1">سعر الوحدة (جنيه)</label>
                   <input
                     type="number"
                     step="0.01"
                     value={costPerUnit}
                     onChange={(e) => setCostPerUnit(e.target.value)}
-                    placeholder={selectedItem && items.find(i => i.id === selectedItem)?.unit === 'كجم' ? 'سعر الكيلو' : 'سعر القطعة'}
+                    placeholder="مثال: 25"
                     className="w-full py-3 px-4 border-2 border-beige-300 rounded-xl focus:border-olive-500 focus:outline-none"
                   />
                 </div>
@@ -782,20 +722,14 @@ const Inventory = () => {
               </h2>
               
               <div>
-                <label className="block text-olive-600 text-sm mb-1">
-                  {showEditItem.costLabel || 'سعر الوحدة'} (جنيه)
-                </label>
+                <label className="block text-olive-600 text-sm mb-1">سعر الوحدة (جنيه)</label>
                 <input
                   type="number"
                   step="0.01"
                   value={costPerUnit}
                   onChange={(e) => setCostPerUnit(e.target.value)}
-                  placeholder={showEditItem.costLabel || 'سعر الوحدة'}
                   className="w-full py-3 px-4 border-2 border-beige-300 rounded-xl focus:border-olive-500 focus:outline-none"
                 />
-                <p className="text-xs text-olive-400 mt-1">
-                  الشنطة تحتاج {showEditItem.quantityPerBox} {showEditItem.unit}
-                </p>
               </div>
               
               <div className="flex gap-3 mt-6">
