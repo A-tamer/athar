@@ -114,6 +114,15 @@ const Inventory = () => {
 
   const initializeItems = async () => {
     try {
+      // Double-check the collection is truly empty before adding
+      const { getDocs } = await import('firebase/firestore')
+      const existingDocs = await getDocs(collection(db, 'inventoryItems'))
+      if (!existingDocs.empty) {
+        console.log('Items already exist, skipping initialization')
+        return
+      }
+      
+      console.log('Creating default items...')
       for (const item of DEFAULT_ITEMS) {
         const docRef = await addDoc(collection(db, 'inventoryItems'), {
           name: item.name,
