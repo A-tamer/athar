@@ -348,11 +348,21 @@ const Inventory = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="bg-white rounded-2xl p-4 shadow-lg"
+            className="bg-white rounded-2xl p-4 shadow-lg group relative"
           >
             <h3 className="text-olive-600 text-sm mb-1">تكلفة الشنطة</h3>
             <p className="text-3xl font-bold text-olive-700">{stats.costPerBox.toFixed(0)}</p>
-            <p className="text-olive-500 text-xs">جنيه</p>
+            <p className="text-olive-500 text-xs">جنيه (اضغط للتفاصيل)</p>
+            {/* Cost breakdown tooltip */}
+            <div className="absolute left-0 right-0 top-full mt-2 bg-olive-800 text-white p-3 rounded-xl text-xs opacity-0 group-hover:opacity-100 transition-opacity z-10 pointer-events-none">
+              <p className="font-bold mb-2">تفاصيل التكلفة:</p>
+              {items.map(item => (
+                <div key={item.id} className="flex justify-between">
+                  <span>{item.name}</span>
+                  <span>{item.quantityPerBox} × {item.costPerUnit || 0} = {(item.quantityPerBox * (item.costPerUnit || 0)).toFixed(1)}</span>
+                </div>
+              ))}
+            </div>
           </motion.div>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -381,7 +391,7 @@ const Inventory = () => {
         )}
 
         {/* Action Buttons */}
-        <div className="flex gap-4 mb-8">
+        <div className="flex gap-4 mb-8 flex-wrap">
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -397,6 +407,32 @@ const Inventory = () => {
             className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-xl"
           >
             📦 تجهيز شنط
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={async () => {
+              if (window.confirm('هل تريد إعادة ضبط المنتجات للقيم الافتراضية؟ سيتم حذف جميع بيانات المخزون!')) {
+                setSubmitting(true)
+                try {
+                  // Delete all existing items
+                  for (const item of items) {
+                    await deleteDoc(doc(db, 'inventoryItems', item.id))
+                  }
+                  // Reinitialize with defaults
+                  await initializeItems()
+                  alert('تم إعادة ضبط المنتجات بنجاح')
+                } catch (error) {
+                  console.error('Error resetting items:', error)
+                  alert('حدث خطأ: ' + error.message)
+                }
+                setSubmitting(false)
+              }
+            }}
+            disabled={submitting}
+            className="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-xl"
+          >
+            🔄 إعادة ضبط المنتجات
           </motion.button>
         </div>
 
