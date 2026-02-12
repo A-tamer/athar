@@ -24,7 +24,7 @@ const DEFAULT_ITEMS = [
   { id: 'pasta', name: 'مكرونة 350 جم', nameEn: 'Pasta', quantityPerBox: 3, unit: 'كيس', costPerUnit: 0 },
   { id: 'fava', name: 'فول', nameEn: 'Fava Beans', quantityPerBox: 1, unit: 'كجم', costPerUnit: 0 },
   { id: 'lentils', name: 'عدس', nameEn: 'Lentils', quantityPerBox: 0.5, unit: 'كجم', costPerUnit: 0 },
-  { id: 'dates', name: 'تمر', nameEn: 'Dates', quantityPerBox: 0.7, unit: 'كجم', costPerUnit: 0 },
+  { id: 'dates', name: 'تمر', nameEn: 'Dates', quantityPerBox: 0.55, unit: 'كجم', costPerUnit: 0 },
   { id: 'tomato', name: 'صلصة', nameEn: 'Tomato Paste', quantityPerBox: 0.3, unit: 'كجم', costPerUnit: 0 },
   { id: 'tea', name: 'شاي', nameEn: 'Tea', quantityPerBox: 40, unit: 'جم', costPerUnit: 0 },
   { id: 'salt', name: 'ملح', nameEn: 'Salt', quantityPerBox: 1, unit: 'كيس', costPerUnit: 0 },
