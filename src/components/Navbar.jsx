@@ -1,114 +1,64 @@
 import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
+
+const SCROLL_THRESHOLD = 50
 
 const Navbar = () => {
   const location = useLocation()
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
 
-  // Close menu on route change
-  useEffect(() => {
-    setMobileMenuOpen(false)
-  }, [location])
-
-  // Track scroll for background
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 50)
+      setScrolled(window.scrollY > SCROLL_THRESHOLD)
     }
+    handleScroll()
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
+  }, [location.pathname])
+
+  const linkClass = (path) => {
+    const active = location.pathname === path
+    return `inline-flex h-11 shrink-0 items-center whitespace-nowrap text-base font-bold transition-colors hover:text-gold-600 sm:text-lg ${
+      active ? 'text-gold-600' : 'text-olive-800'
+    }`
+  }
+  const donateClass =
+    'inline-flex h-11 items-center rounded-xl bg-olive-700 px-4 text-base font-bold text-beige-100 shadow-md transition-colors hover:bg-olive-800 sm:px-5 sm:text-lg md:px-6'
 
   return (
-    <nav className={`fixed top-0 right-0 left-0 z-50 transition-all duration-300 bg-beige-100 ${
-      scrolled ? 'shadow-md' : ''
-    }`}>
+    <nav
+      className={`fixed top-0 right-0 left-0 z-50 border-b border-[#d5ccb9] transition-all duration-300 ease-out ${
+        scrolled ? 'bg-beige-100/95 shadow-md backdrop-blur-[4px]' : 'bg-beige-100 shadow-sm backdrop-blur-0'
+      }`}
+    >
       <div className="container mx-auto px-4 sm:px-6">
-        <div className="flex items-center justify-between h-14 sm:h-16 md:h-20">
-          {/* Logo */}
-          <Link to="/" className="flex items-center">
-            <motion.img 
+        <div className="flex h-[4.5rem] items-center justify-between gap-3 sm:h-20 md:h-24 sm:gap-4">
+          <Link to="/" className="flex min-w-0 shrink items-center">
+            <motion.img
               src="/logo.png"
               alt="أثر"
-              whileHover={{ scale: 1.1 }}
-              transition={{ type: "spring", stiffness: 300, damping: 15 }}
-              className="h-10 sm:h-12 md:h-16 w-auto cursor-pointer object-contain"
+              whileHover={{ scale: 1.06 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 15 }}
+              className="h-16 w-auto max-w-[52vw] cursor-pointer object-contain sm:h-20 md:h-24 sm:max-w-none"
             />
           </Link>
 
-          {/* Desktop Menu */}
-          <div className="hidden md:flex items-center gap-6 lg:gap-8">
-            <Link 
-              to="/"
-              className={`font-bold hover:text-gold-600 transition-colors ${
-                location.pathname === '/' ? 'text-gold-600' : 'text-olive-800'
-              }`}
-            >
+          <div className="flex min-w-0 items-center justify-end gap-3 sm:gap-4 md:gap-6 lg:gap-8">
+            <Link to="/" className={linkClass('/')}>
               الرئيسية
             </Link>
-            <Link to="/donate">
-              <button className="bg-olive-700 hover:bg-olive-800 text-beige-100 font-bold py-2 px-6 rounded-xl transition-colors shadow-md">
+            <Link to="/activities" className={linkClass('/activities')}>
+              أنشطتنا
+            </Link>
+            <Link to="/donate" className="shrink-0">
+              <button type="button" className={donateClass}>
                 تبرّع الآن
               </button>
             </Link>
           </div>
-
-          {/* Mobile Menu Button */}
-          <motion.button 
-            whileTap={{ scale: 0.9 }}
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-3 rounded-xl transition-colors text-olive-800 bg-beige-200/80 hover:bg-beige-300"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              {mobileMenuOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              )}
-            </svg>
-          </motion.button>
         </div>
       </div>
-
-      {/* Mobile Menu Dropdown */}
-      <AnimatePresence>
-        {mobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.2 }}
-            className="md:hidden bg-beige-100 border-t border-beige-300 shadow-lg"
-          >
-            <div className="container mx-auto px-4 py-4 space-y-2">
-              <Link 
-                to="/"
-                onClick={() => setMobileMenuOpen(false)}
-                className={`flex items-center gap-3 p-3 rounded-xl font-bold transition-colors ${
-                  location.pathname === '/' 
-                    ? 'bg-beige-200 text-olive-800' 
-                    : 'text-olive-700 hover:bg-beige-200'
-                }`}
-              >
-                <span className="text-xl">🏠</span>
-                الرئيسية
-              </Link>
-              <div className="pt-2">
-                <Link 
-                  to="/donate"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <button className="w-full bg-olive-700 hover:bg-olive-800 text-beige-100 font-bold py-4 rounded-xl text-lg shadow-md">
-                    تبرّع الآن
-                  </button>
-                </Link>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </nav>
   )
 }

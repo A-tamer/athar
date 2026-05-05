@@ -5,286 +5,459 @@ import { collection, query, where, onSnapshot } from 'firebase/firestore'
 import { db } from '../lib/firebase'
 import CountUp from 'react-countup'
 import Navbar from '../components/Navbar'
+import Footer from '../components/Footer'
+import FAQ from '../components/FAQ'
+import { CAUSES } from '../lib/causes'
+
+const MEAL_COST = CAUSES.arafat.unitCost
+const MEAL_GOAL = CAUSES.arafat.mealGoal
+
+const HERO_GOLD = '#D4A757'
+
+const HERO_TOP_OVERLAY_STYLE = {
+  background: 'linear-gradient(to bottom, rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.4), transparent)',
+}
+
+const HeroTopBand = () => (
+  <div
+    className="pointer-events-none absolute top-0 left-0 z-[2] h-[120px] w-full"
+    style={HERO_TOP_OVERLAY_STYLE}
+    aria-hidden
+  />
+)
+
+const HeroCrescentDivider = () => (
+  <div className="mx-auto mb-6 flex w-full max-w-sm items-center gap-3 px-1" aria-hidden>
+    <div className="h-px flex-1" style={{ backgroundColor: HERO_GOLD }} />
+    <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill={HERO_GOLD} aria-hidden>
+      <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+    </svg>
+    <div className="h-px flex-1" style={{ backgroundColor: HERO_GOLD }} />
+  </div>
+)
 
 const Home = () => {
   const [totalDonations, setTotalDonations] = useState(0)
-  const [boxCount, setBoxCount] = useState(0)
-  const [costPerBox, setCostPerBox] = useState(0)
+  const [mealCount, setMealCount] = useState(0)
 
   useEffect(() => {
-    // Listen to inventory items to get real cost per box
-    const unsubInventory = onSnapshot(
-      collection(db, 'inventoryItems'),
+    const q = query(collection(db, 'donations'), where('status', '==', 'approved'))
+
+    const unsubscribe = onSnapshot(
+      q,
       (snapshot) => {
-        let cost = 0
-        snapshot.forEach((doc) => {
-          const data = doc.data()
-          cost += (data.quantityPerBox || 0) * (data.costPerUnit || 0)
+        let total = 0
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data()
+          if (data.cause === 'arafat') {
+            total += data.amount || 0
+          }
         })
-        console.log('Cost per box from inventory:', cost)
-        setCostPerBox(cost)
+        setTotalDonations(total)
       },
       (error) => {
-        console.error('Error fetching inventory:', error)
+        console.error('Firebase error (arafat):', error)
+        setTotalDonations(0)
       }
     )
-
-    return () => unsubInventory()
-  }, [])
-
-  useEffect(() => {
-    // Listen to approved donations
-    const q = query(
-      collection(db, 'donations'),
-      where('status', '==', 'approved')
-    )
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      console.log('Approved donations count:', snapshot.size)
-      let total = 0
-      snapshot.forEach((doc) => {
-        const data = doc.data()
-        total += data.amount || 0
-      })
-      console.log('Total donations:', total)
-      setTotalDonations(total)
-    }, (error) => {
-      console.error('Firebase error:', error)
-      setTotalDonations(0)
-    })
 
     return () => unsubscribe()
   }, [])
 
-  // Calculate boxes from total donations / cost per box from inventory
   useEffect(() => {
-    if (costPerBox > 0 && totalDonations > 0) {
-      setBoxCount(Math.floor(totalDonations / costPerBox))
+    if (MEAL_COST > 0 && totalDonations > 0) {
+      setMealCount(Math.floor(totalDonations / MEAL_COST))
     } else {
-      setBoxCount(0)
+      setMealCount(0)
     }
-  }, [totalDonations, costPerBox])
+  }, [totalDonations])
 
-  // Calculate estimated families (1 box per family)
-  const familiesSupported = boxCount
+  const percentGoal = Math.min(Math.round((mealCount / MEAL_GOAL) * 100), 100)
+
+  const steps = [
+    {
+      title: 'تبرّع',
+      desc: 'اختر عدد وجبات الإفطار أو أي مبلغ يناسبك عبر طرق الدفع المتاحة.',
+      icon: '🤲',
+      imageSrc: '/hero-meals.png',
+      imageAlt: 'توزيع وجبات على الأطفال والمحتاجين',
+    },
+    { title: 'نشتري ونوزّع', desc: 'فريق أثر يجهّز الوجبات ويوزّعها على الصائمين بإذن الله.', icon: '📦' },
+    { title: 'نوافيك بالأثر', desc: 'تتابع الإحصائيات المباشرة وتشارك الخير مع من تحب.', icon: '✨' },
+  ]
 
   return (
     <div className="min-h-screen bg-beige-100">
       <Navbar />
-      
-      {/* Live Impact Section - First Section */}
-      <motion.section 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.8 }}
-        className="pt-16 sm:pt-20 md:pt-24 pb-10 sm:pb-12 md:pb-16 bg-olive-700 relative overflow-hidden"
-      >
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          }} />
-        </div>
 
-        <div className="container mx-auto px-4 sm:px-6 relative z-10">
-          {/* Live Badge */}
-          <motion.div 
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex justify-center mb-6 sm:mb-8"
-          >
-            <div className="bg-white/20 backdrop-blur-sm rounded-full px-4 sm:px-6 py-2 flex items-center gap-2 sm:gap-3">
-              <motion.div
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-                className="w-2 h-2 sm:w-3 sm:h-3 bg-red-500 rounded-full"
-              />
-              <span className="text-white font-bold text-sm sm:text-base">مباشر - يتم التحديث لحظياً</span>
-            </div>
-          </motion.div>
-
-          <motion.h2 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white text-center mb-8 sm:mb-10 md:mb-12"
-          >
-            أثرنا معاً
-          </motion.h2>
-
-          {/* Main Stats Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 max-w-6xl mx-auto mb-6 sm:mb-8">
-            {/* Total Donations */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="bg-white/10 backdrop-blur-sm rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-6 text-center border border-white/20"
-            >
-              <div className="text-xl sm:text-2xl md:text-4xl lg:text-5xl font-black text-gold-400 mb-1 sm:mb-2">
-                <CountUp
-                  end={totalDonations}
-                  duration={2.5}
-                  separator=","
-                />
-              </div>
-              <p className="text-xs sm:text-sm md:text-lg text-beige-200">جنيه تبرعات</p>
-            </motion.div>
-
-            {/* Boxes Count */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-white/10 backdrop-blur-sm rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-6 text-center border border-white/20"
-            >
-              <div className="text-xl sm:text-2xl md:text-4xl lg:text-5xl font-black text-gold-400 mb-1 sm:mb-2">
-                <CountUp
-                  end={boxCount}
-                  duration={2.5}
-                  separator=","
-                />
-              </div>
-              <p className="text-xs sm:text-sm md:text-lg text-beige-200">شنطة رمضان</p>
-            </motion.div>
-
-            {/* Families Supported */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="bg-white/10 backdrop-blur-sm rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-6 text-center border border-white/20"
-            >
-              <div className="flex items-center justify-center gap-1 sm:gap-2 mb-1 sm:mb-2">
-                <span className="text-xl sm:text-2xl md:text-3xl">👨‍👩‍👧‍👦</span>
-                <span className="text-xl sm:text-2xl md:text-4xl lg:text-5xl font-black text-gold-400">
-                  <CountUp
-                    end={familiesSupported}
-                    duration={2.5}
-                    separator=","
-                  />
-                </span>
-              </div>
-              <p className="text-xs sm:text-sm md:text-lg text-beige-200">أسرة مستفيدة</p>
-            </motion.div>
-
-            {/* Goal Progress */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="bg-white/10 backdrop-blur-sm rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-6 text-center border border-white/20"
-            >
-              <div className="flex items-center justify-center gap-1 sm:gap-2 mb-1 sm:mb-2">
-                <span className="text-xl sm:text-2xl md:text-3xl">🎯</span>
-                <span className="text-xl sm:text-2xl md:text-4xl lg:text-5xl font-black text-gold-400">
-                  {Math.min(Math.round((boxCount / 500) * 100), 100)}%
-                </span>
-              </div>
-              <p className="text-xs sm:text-sm md:text-lg text-beige-200">من هدف 500 شنطة</p>
-            </motion.div>
+      {/* Hero — portrait photo + overlay on mobile; split panel + landscape on laptop */}
+      <section className="relative overflow-hidden bg-olive-900">
+        {/* Mobile: z-[1] image stack, z-[2] top band (below navbar z-50), z-10 content */}
+        <div className="relative isolate flex min-h-[100svh] flex-col md:hidden">
+          <div className="absolute inset-0 z-[1]">
+            <img
+              src="/hero-meals-mobile.png"
+              alt="توزيع وجبات إفطار على المحتاجين"
+              className="absolute inset-0 h-full w-full object-cover object-[center_22%]"
+            />
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 50%, transparent 100%)',
+              }}
+            />
           </div>
+          <HeroTopBand />
 
-          {/* Progress Bar */}
-          <motion.div
-            initial={{ opacity: 0, scaleX: 0 }}
-            animate={{ opacity: 1, scaleX: 1 }}
-            transition={{ delay: 0.5, duration: 0.8 }}
-            className="max-w-xl sm:max-w-2xl mx-auto px-2"
+          <div
+            className="relative z-10 mt-auto flex w-full flex-col items-center justify-end px-4 pb-[max(1.75rem,env(safe-area-inset-bottom))]"
+            style={{ paddingTop: 'max(5.5rem, env(safe-area-inset-top))' }}
           >
-            <div className="bg-white/20 rounded-full h-3 sm:h-4 overflow-hidden">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${Math.min((boxCount / 500) * 100, 100)}%` }}
-                transition={{ delay: 0.8, duration: 1.5, ease: "easeOut" }}
-                className="bg-gradient-to-r from-gold-400 to-gold-500 h-full rounded-full"
-              />
-            </div>
-            <div className="flex justify-between mt-2 text-beige-200 text-xs sm:text-sm">
-              <span>{boxCount} شنطة</span>
-              <span>الهدف: 500 شنطة</span>
-            </div>
-          </motion.div>
-
-          {/* CTA in Impact Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-            className="text-center mt-8 sm:mt-10"
-          >
-            <Link to="/donate">
-              <motion.button 
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-gold-500 hover:bg-gold-600 text-white text-lg sm:text-xl md:text-2xl font-bold py-4 sm:py-5 px-8 sm:px-12 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-xl transition-all"
+            <div className="flex w-[85%] max-w-md flex-col items-center">
+              <motion.h1
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-2 text-center text-[1.75rem] font-black leading-[1.25] tracking-tight text-white sm:text-[2rem] [text-shadow:0_2px_20px_rgba(0,0,0,0.5)]"
               >
-                ساهم الآن
-              </motion.button>
-            </Link>
-          </motion.div>
+                إفطار صائم يوم عرفة
+              </motion.h1>
+              <HeroCrescentDivider />
+              <motion.p
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.06 }}
+                className="mb-8 w-full text-center text-[0.95rem] font-medium leading-[1.85] text-white sm:text-base [text-shadow:0_1px_12px_rgba(0,0,0,0.45)]"
+              >
+                يوم عرفة من أفضل أيام الدنيا؛ صيامه يكفّر سنتين، وإفطار الصائم فيه أجر عظيم. كن سبباً في فرح صائم بإذن الله.
+              </motion.p>
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.12 }}
+                className="flex w-full flex-col items-stretch gap-3.5"
+              >
+                <Link to="/donate" className="w-full">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    type="button"
+                    className="w-full rounded-3xl px-5 py-4 text-base font-black text-white shadow-[0_6px_24px_rgba(0,0,0,0.35)] transition-[filter] hover:brightness-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:py-[1.05rem] sm:text-lg"
+                    style={{ backgroundColor: HERO_GOLD }}
+                  >
+                    ساهم بإفطار صائم
+                  </motion.button>
+                </Link>
+                <Link to="/activities" className="w-full">
+                  <motion.button
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    type="button"
+                    className="w-full rounded-3xl border-2 border-white bg-transparent px-5 py-3.5 text-sm font-bold text-white shadow-none transition-colors hover:bg-white/10 sm:py-4 sm:text-base"
+                  >
+                    تعرف على أنشطتنا
+                  </motion.button>
+                </Link>
+              </motion.div>
+            </div>
+          </div>
         </div>
-      </motion.section>
 
-      {/* Box Contents Section */}
+        {/* Laptop / tablet: split — top band + z-layering on image column */}
+        <div className="relative isolate hidden min-h-[min(92vh,760px)] grid-cols-1 md:grid md:grid-cols-2">
+          <div className="relative z-10 flex flex-col justify-center px-6 py-16 lg:px-12 xl:px-16">
+            <HeroTopBand />
+            <div className="relative z-10 mx-auto max-w-xl text-center md:mx-0 md:text-right">
+              <motion.h1
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-5 text-4xl font-black leading-tight text-white lg:text-5xl xl:text-6xl"
+              >
+                إفطار صائم يوم عرفة
+              </motion.h1>
+              <motion.p
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.06 }}
+                className="mb-10 text-lg leading-relaxed text-beige-100 lg:text-xl"
+              >
+                يوم عرفة من أفضل أيام الدنيا؛ صيامه يكفّر سنتين، وإفطار الصائم فيه أجر عظيم. كن سبباً في فرح صائم بإذن الله.
+              </motion.p>
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.12 }}
+                className="flex flex-col items-stretch justify-center gap-4 sm:flex-row md:justify-start"
+              >
+                <Link to="/donate" className="sm:flex-1 md:flex-initial">
+                  <motion.button
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="w-full rounded-3xl px-8 py-4 text-lg font-black text-white shadow-lg transition-[filter] hover:brightness-105 sm:w-auto"
+                    style={{ backgroundColor: HERO_GOLD }}
+                  >
+                    ساهم بإفطار صائم
+                  </motion.button>
+                </Link>
+                <Link to="/activities" className="sm:flex-1 md:flex-initial">
+                  <motion.button
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="w-full rounded-3xl border-2 border-beige-300/60 bg-white/5 px-8 py-4 font-bold text-white hover:bg-white/10 sm:w-auto"
+                  >
+                    تعرف على أنشطتنا
+                  </motion.button>
+                </Link>
+              </motion.div>
+            </div>
+          </div>
+          <div className="relative z-[1] min-h-[320px] lg:min-h-0">
+            <img
+              src="/hero-meals.png"
+              alt="توزيع وجبات إفطار على المحتاجين"
+              className="absolute inset-0 z-[1] h-full w-full object-cover object-[center_30%] lg:object-center"
+            />
+            <div
+              className="absolute inset-0 z-[1] bg-olive-900/10 md:bg-gradient-to-l md:from-olive-900/40 md:to-transparent"
+              aria-hidden
+            />
+            <HeroTopBand />
+          </div>
+        </div>
+      </section>
+
+      {/* Virtue */}
       <motion.section
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
-        className="py-8 sm:py-12 md:py-16 bg-beige-100"
+        className="py-12 sm:py-16 bg-white border-y border-beige-200"
       >
-        <div className="container mx-auto px-4 sm:px-6">
+        <div className="container mx-auto px-4 sm:px-6 max-w-3xl text-center">
           <motion.h2
-            initial={{ y: -20, opacity: 0 }}
+            initial={{ y: 16, opacity: 0 }}
             whileInView={{ y: 0, opacity: 1 }}
             viewport={{ once: true }}
-            className="text-2xl sm:text-3xl md:text-4xl font-bold text-olive-700 text-center mb-6 sm:mb-8"
+            className="text-2xl sm:text-3xl font-bold text-olive-800 mb-6"
           >
-            محتويات الشنطة
+            لماذا إفطار يوم عرفات؟
           </motion.h2>
-          <motion.div
-            initial={{ y: 30, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
-            className="max-w-2xl mx-auto"
-          >
-            <img 
-              src="/box-contents.png" 
-              alt="محتويات شنطة رمضان"
-              className="w-full h-auto rounded-2xl shadow-xl"
-            />
-          </motion.div>
+          <p className="text-olive-700 leading-relaxed text-base sm:text-lg mb-4">
+            قال النبي ﷺ: <span className="font-bold text-olive-900">&ldquo;من فطّر صائماً كان له مثل أجره من غير أن ينقص من أجر الصائم شيء&rdquo;</span> — رواه الترمذي.
+          </p>
+          <p className="text-olive-600 leading-relaxed text-sm sm:text-base">
+            يوم عرفة يُجتمع فيه الخير: صيام يومٍ عظيم، وإطعامٌ للصائمين، ودعواتٌ مستجابة. مع أثر، تساهم في إفطار صائم بوجبة نظيفة ومُحضَّرة بعناية.
+          </p>
         </div>
       </motion.section>
 
-      {/* Footer CTA */}
-      <motion.section 
-        initial={{ opacity: 0, y: 50 }}
+      {/* Live impact Arafat */}
+      <motion.section
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        className="py-12 sm:py-16 md:py-20 bg-gradient-to-b from-olive-800 to-olive-900 relative overflow-hidden"
+      >
+        <div className="absolute inset-0 opacity-10">
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.35'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            }}
+          />
+        </div>
+        <div className="container mx-auto px-4 sm:px-6 relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: -12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="flex justify-center mb-6"
+          >
+            <div className="bg-white/15 backdrop-blur-sm rounded-full px-4 py-2 flex items-center gap-2">
+              <motion.span
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+                className="w-2.5 h-2.5 bg-red-500 rounded-full"
+              />
+              <span className="text-white font-bold text-sm">مباشر — إفطار عرفات</span>
+            </div>
+          </motion.div>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white text-center mb-10">أثرنا في إفطار عرفات</h2>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-5 max-w-5xl mx-auto mb-8">
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="rounded-2xl bg-white/10 backdrop-blur border border-white/20 p-4 sm:p-6 text-center"
+            >
+              <div className="text-2xl sm:text-4xl font-black text-gold-300 mb-1">
+                <CountUp end={totalDonations} duration={2.2} separator="," />
+              </div>
+              <p className="text-beige-200 text-xs sm:text-sm">جنيه تبرعات</p>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.05 }}
+              className="rounded-2xl bg-white/10 backdrop-blur border border-white/20 p-4 sm:p-6 text-center"
+            >
+              <div className="text-2xl sm:text-4xl font-black text-gold-300 mb-1">
+                <CountUp end={mealCount} duration={2.2} separator="," />
+              </div>
+              <p className="text-beige-200 text-xs sm:text-sm">وجبة إفطار</p>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+              className="rounded-2xl bg-white/10 backdrop-blur border border-white/20 p-4 sm:p-6 text-center"
+            >
+              <div className="text-2xl sm:text-4xl font-black text-gold-300 mb-1">{percentGoal}%</div>
+              <p className="text-beige-200 text-xs sm:text-sm">من الهدف</p>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.15 }}
+              className="rounded-2xl bg-white/10 backdrop-blur border border-white/20 p-4 sm:p-6 text-center"
+            >
+              <div className="text-lg sm:text-2xl font-bold text-white mb-1">{MEAL_GOAL.toLocaleString()}</div>
+              <p className="text-beige-200 text-xs sm:text-sm">وجبة هدف</p>
+            </motion.div>
+          </div>
+
+          <div className="max-w-xl mx-auto mb-10">
+            <div className="bg-white/15 rounded-full h-3 overflow-hidden">
+              <motion.div
+                initial={{ width: 0 }}
+                whileInView={{ width: `${percentGoal}%` }}
+                viewport={{ once: true }}
+                transition={{ duration: 1.2, ease: 'easeOut' }}
+                className="bg-gradient-to-r from-gold-400 to-gold-500 h-full rounded-full"
+              />
+            </div>
+            <p className="text-beige-300 text-xs text-center mt-2">تُحسب الوجبات على أساس {MEAL_COST} جنيه للوجبة (قابل للتعديل)</p>
+          </div>
+
+          <div className="text-center">
+            <Link to="/donate">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="bg-gold-500 hover:bg-gold-600 text-white text-lg font-bold py-4 px-10 rounded-2xl shadow-lg"
+              >
+                ساهم الآن
+              </motion.button>
+            </Link>
+          </div>
+        </div>
+      </motion.section>
+
+      {/* How it works */}
+      <section className="py-12 sm:py-16 md:py-20 bg-beige-50">
+        <div className="container mx-auto px-4 sm:px-6">
+          <motion.h2
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-2xl sm:text-3xl font-bold text-olive-800 text-center mb-10 sm:mb-14"
+          >
+            كيف نعمل؟
+          </motion.h2>
+          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {steps.map((s, i) => (
+              <motion.div
+                key={s.title}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.08 }}
+                className={`rounded-2xl border border-beige-300 bg-white shadow-md overflow-hidden text-center ${
+                  s.imageSrc ? 'p-0' : 'p-6'
+                }`}
+              >
+                {s.imageSrc ? (
+                  <>
+                    <div className="aspect-[4/3] w-full overflow-hidden">
+                      <img src={s.imageSrc} alt={s.imageAlt || ''} className="h-full w-full object-cover object-center" />
+                    </div>
+                    <div className="p-6">
+                      <div className="text-3xl mb-3">{s.icon}</div>
+                      <h3 className="text-xl font-bold text-olive-800 mb-2">{s.title}</h3>
+                      <p className="text-olive-600 text-sm leading-relaxed">{s.desc}</p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-4xl mb-4">{s.icon}</div>
+                    <h3 className="text-xl font-bold text-olive-800 mb-2">{s.title}</h3>
+                    <p className="text-olive-600 text-sm leading-relaxed">{s.desc}</p>
+                  </>
+                )}
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Other activities preview */}
+      <motion.section
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        className="py-12 sm:py-16 bg-white"
+      >
+        <div className="container mx-auto px-4 sm:px-6">
+          <h2 className="text-2xl sm:text-3xl font-bold text-olive-800 text-center mb-8">أنشطة أخرى</h2>
+          <div className="max-w-lg mx-auto rounded-3xl border border-beige-200 overflow-hidden shadow-lg bg-beige-50">
+            <div className="aspect-[16/9] bg-olive-100">
+              <img src="/box-contents.png" alt="شنطة رمضان" className="w-full h-full object-cover" />
+            </div>
+            <div className="p-6 text-center">
+              <h3 className="text-xl font-bold text-olive-800 mb-2">شنطة رمضان</h3>
+              <p className="text-olive-600 text-sm mb-5">حملة رمضان لتوزيع السلال الغذائية — تفاصيل وأرقام من صفحة النشاط.</p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Link
+                  to="/ramadan"
+                  className="inline-flex justify-center rounded-xl bg-olive-700 hover:bg-olive-800 text-white font-bold py-3 px-6"
+                >
+                  صفحة رمضان
+                </Link>
+                <Link
+                  to="/activities"
+                  className="inline-flex justify-center rounded-xl border-2 border-olive-600 text-olive-800 font-bold py-3 px-6 hover:bg-beige-100"
+                >
+                  كل الأنشطة
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </motion.section>
+
+      <FAQ />
+
+      <motion.section
+        initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        className="py-12 sm:py-16 md:py-20 bg-olive-800"
+        className="py-12 sm:py-16 bg-olive-800"
       >
         <div className="container mx-auto px-4 sm:px-6 text-center">
-          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-6 sm:mb-8">
-            كن جزءاً من الأثر
-          </h2>
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-6">كن جزءاً من الأثر</h2>
           <Link to="/donate">
-            <button className="bg-gold-500 hover:bg-gold-600 text-white text-lg sm:text-xl font-bold py-3 sm:py-4 px-8 sm:px-10 rounded-xl shadow-lg transition-colors">
-              تبرّع الآن
+            <button className="bg-gold-500 hover:bg-gold-600 text-white text-lg font-bold py-3 px-10 rounded-xl shadow-lg transition-colors">
+              تبرّع
             </button>
           </Link>
         </div>
       </motion.section>
 
-      {/* Footer */}
-      <footer className="bg-olive-900 text-beige-200 py-6 sm:py-8">
-        <div className="container mx-auto px-4 sm:px-6 text-center">
-          <p className="text-base sm:text-lg mb-1 sm:mb-2">أثر © 2026</p>
-          <p className="text-xs sm:text-sm opacity-70 mb-2">جميع الحقوق محفوظة</p>
-          <p className="text-xs sm:text-sm opacity-50">Made by Eng/ Ahmed Tamer</p>
-          <p className="text-xs sm:text-sm opacity-50 mt-1">For business inquiries: ahmedtwafa@gmail.com</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   )
 }

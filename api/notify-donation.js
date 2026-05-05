@@ -14,7 +14,16 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { donationId, amount, boxes, paymentMethod, screenshotURL } = req.body
+    const {
+      donationId,
+      amount,
+      boxes,
+      units,
+      cause,
+      causeLabel,
+      paymentMethod,
+      screenshotURL,
+    } = req.body
 
     const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
     const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID
@@ -25,11 +34,20 @@ export default async function handler(req, res) {
     }
 
     // Create message with inline keyboard
+    const causeLine = cause ? `🎯 *المبادرة:* ${causeLabel || cause}\n` : ''
+    const unitsLine =
+      typeof units === 'number' && units > 0
+        ? `📊 *العدد:* ${units}\n`
+        : ''
+    const boxesLine =
+      boxes !== undefined && boxes !== null && boxes !== ''
+        ? `📦 *عدد الشنط:* ${boxes}\n`
+        : ''
+
     const message = `
 🆕 *تبرع جديد*
 
-💰 *المبلغ:* ${amount.toLocaleString()} جنيه
-📦 *عدد الشنط:* ${boxes || 'غير محدد'}
+${causeLine}${unitsLine}${boxesLine}💰 *المبلغ:* ${amount.toLocaleString()} جنيه
 💳 *طريقة الدفع:* ${paymentMethod}
 🆔 *رقم التبرع:* \`${donationId}\`
 
