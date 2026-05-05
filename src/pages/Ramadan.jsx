@@ -19,7 +19,7 @@ const Ramadan = () => {
     <div className="min-h-screen bg-beige-100">
       <Navbar />
 
-      <section className="relative pt-20 sm:pt-24 overflow-hidden border-b border-beige-300">
+      <section className="relative pt-28 sm:pt-32 overflow-hidden border-b border-beige-300">
         <div className="absolute inset-0">
           <img
             src="/ramadan-box-card.png"

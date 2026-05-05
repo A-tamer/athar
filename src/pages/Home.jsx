@@ -6,7 +6,6 @@ import { db } from '../lib/firebase'
 import CountUp from 'react-countup'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
-import FAQ from '../components/FAQ'
 import { CAUSES } from '../lib/causes'
 
 const MEAL_COST = CAUSES.arafat.unitCost
@@ -73,18 +72,6 @@ const Home = () => {
   }, [totalDonations])
 
   const percentGoal = Math.min(Math.round((mealCount / MEAL_GOAL) * 100), 100)
-
-  const steps = [
-    {
-      title: 'تبرّع',
-      desc: 'اختر عدد وجبات الإفطار أو أي مبلغ يناسبك عبر طرق الدفع المتاحة.',
-      icon: '🤲',
-      imageSrc: '/hero-meals.png',
-      imageAlt: 'توزيع وجبات على الأطفال والمحتاجين',
-    },
-    { title: 'نشتري ونوزّع', desc: 'فريق أثر يجهّز الوجبات ويوزّعها على الصائمين بإذن الله.', icon: '📦' },
-    { title: 'نوافيك بالأثر', desc: 'تتابع الإحصائيات المباشرة وتشارك الخير مع من تحب.', icon: '✨' },
-  ]
 
   return (
     <div className="min-h-screen bg-beige-100">
@@ -354,106 +341,6 @@ const Home = () => {
               </motion.button>
             </Link>
           </div>
-        </div>
-      </motion.section>
-
-      {/* How it works */}
-      <section className="py-12 sm:py-16 md:py-20 bg-beige-50">
-        <div className="container mx-auto px-4 sm:px-6">
-          <motion.h2
-            initial={{ opacity: 0, y: 12 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-2xl sm:text-3xl font-bold text-olive-800 text-center mb-10 sm:mb-14"
-          >
-            كيف نعمل؟
-          </motion.h2>
-          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {steps.map((s, i) => (
-              <motion.div
-                key={s.title}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.08 }}
-                className={`rounded-2xl border border-beige-300 bg-white shadow-md overflow-hidden text-center ${
-                  s.imageSrc ? 'p-0' : 'p-6'
-                }`}
-              >
-                {s.imageSrc ? (
-                  <>
-                    <div className="aspect-[4/3] w-full overflow-hidden">
-                      <img src={s.imageSrc} alt={s.imageAlt || ''} className="h-full w-full object-cover object-center" />
-                    </div>
-                    <div className="p-6">
-                      <div className="text-3xl mb-3">{s.icon}</div>
-                      <h3 className="text-xl font-bold text-olive-800 mb-2">{s.title}</h3>
-                      <p className="text-olive-600 text-sm leading-relaxed">{s.desc}</p>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="text-4xl mb-4">{s.icon}</div>
-                    <h3 className="text-xl font-bold text-olive-800 mb-2">{s.title}</h3>
-                    <p className="text-olive-600 text-sm leading-relaxed">{s.desc}</p>
-                  </>
-                )}
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Other activities preview */}
-      <motion.section
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        className="py-12 sm:py-16 bg-white"
-      >
-        <div className="container mx-auto px-4 sm:px-6">
-          <h2 className="text-2xl sm:text-3xl font-bold text-olive-800 text-center mb-8">أنشطة أخرى</h2>
-          <div className="max-w-lg mx-auto rounded-3xl border border-beige-200 overflow-hidden shadow-lg bg-beige-50">
-            <div className="aspect-[16/9] bg-olive-100">
-              <img src="/box-contents.png" alt="شنطة رمضان" className="w-full h-full object-cover" />
-            </div>
-            <div className="p-6 text-center">
-              <h3 className="text-xl font-bold text-olive-800 mb-2">شنطة رمضان</h3>
-              <p className="text-olive-600 text-sm mb-5">حملة رمضان لتوزيع السلال الغذائية — تفاصيل وأرقام من صفحة النشاط.</p>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Link
-                  to="/ramadan"
-                  className="inline-flex justify-center rounded-xl bg-olive-700 hover:bg-olive-800 text-white font-bold py-3 px-6"
-                >
-                  صفحة رمضان
-                </Link>
-                <Link
-                  to="/activities"
-                  className="inline-flex justify-center rounded-xl border-2 border-olive-600 text-olive-800 font-bold py-3 px-6 hover:bg-beige-100"
-                >
-                  كل الأنشطة
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </motion.section>
-
-      <FAQ />
-
-      <motion.section
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        className="py-12 sm:py-16 bg-olive-800"
-      >
-        <div className="container mx-auto px-4 sm:px-6 text-center">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-6">كن جزءاً من الأثر</h2>
-          <Link to="/donate">
-            <button className="bg-gold-500 hover:bg-gold-600 text-white text-lg font-bold py-3 px-10 rounded-xl shadow-lg transition-colors">
-              تبرّع
-            </button>
-          </Link>
         </div>
       </motion.section>
 

@@ -134,7 +134,7 @@ const Donate = () => {
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="min-h-[80vh] flex items-center justify-center pt-20 px-4"
+          className="min-h-[80vh] flex items-center justify-center pt-28 px-4"
         >
           <div className="text-center p-6 sm:p-10">
             <motion.div
@@ -165,7 +165,7 @@ const Donate = () => {
     <div className="min-h-screen bg-gradient-to-b from-beige-100 to-beige-200">
       <Navbar />
 
-      <div className="container mx-auto px-4 sm:px-6 pt-16 sm:pt-20 pb-8 sm:py-12">
+      <div className="container mx-auto px-4 sm:px-6 pt-28 sm:pt-32 pb-8 sm:py-12">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl mx-auto">
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-olive-800 text-center tracking-tight mb-2">تبرّع</h1>
           <p className="text-olive-600 text-center mb-6 sm:mb-8 text-sm sm:text-base">اترك أثراً طيباً في حياة المحتاجين</p>

@@ -9,7 +9,7 @@ const Activities = () => {
     <div className="min-h-screen bg-beige-100">
       <Navbar />
 
-      <section className="pt-20 sm:pt-24 pb-10 sm:pb-14 bg-gradient-to-br from-olive-700 via-olive-600 to-gold-700 relative overflow-hidden">
+      <section className="pt-28 sm:pt-32 pb-10 sm:pb-14 bg-gradient-to-br from-olive-700 via-olive-600 to-gold-700 relative overflow-hidden">
         <div className="absolute inset-0 opacity-[0.12] pointer-events-none">
           <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
             <defs>
