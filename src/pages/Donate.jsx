@@ -43,6 +43,7 @@ const Donate = () => {
   const [selectedMethod, setSelectedMethod] = useState(null)
   const [screenshot, setScreenshot] = useState(null)
   const [screenshotPreview, setScreenshotPreview] = useState(null)
+  const [phoneLocal, setPhoneLocal] = useState('')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
 
@@ -53,6 +54,7 @@ const Donate = () => {
     setSelectedMethod(null)
     setScreenshot(null)
     setScreenshotPreview(null)
+    setPhoneLocal('')
   }, [donationType])
 
   const unitCost = cause.unitCost
@@ -75,8 +77,16 @@ const Donate = () => {
     }
   }
 
+  const normalizeEgyptNumber = (rawValue) => {
+    const digits = String(rawValue || '').replace(/\D/g, '')
+    const trimmed = digits.startsWith('0') ? digits.slice(1) : digits
+    if (trimmed.length < 10 || trimmed.length > 11) return null
+    return `+20${trimmed}`
+  }
+
   const handleSubmit = async () => {
-    if (!totalAmount || !selectedMethod || !screenshot) {
+    const normalizedPhone = normalizeEgyptNumber(phoneLocal)
+    if (!totalAmount || !selectedMethod || !screenshot || !normalizedPhone) {
       alert('يرجى إكمال جميع البيانات')
       return
     }
@@ -93,6 +103,7 @@ const Donate = () => {
         cause: CAUSE_ARAFAT,
         units: unitsCount,
         paymentMethod: selectedMethod.name,
+        phoneNumber: normalizedPhone,
         screenshotURL,
         status: 'pending',
         createdAt: serverTimestamp(),
@@ -110,6 +121,7 @@ const Donate = () => {
             units: unitsCount,
             boxes: 0,
             paymentMethod: selectedMethod.name,
+            phoneNumber: normalizedPhone,
             screenshotURL,
           })
         })
@@ -502,6 +514,27 @@ const Donate = () => {
                     </div>
 
                     <div className="mb-4 sm:mb-6">
+                      <label className="block text-base sm:text-lg font-bold text-olive-700 mb-3 text-center sm:text-right">
+                        رقم واتساب للتأكيد
+                      </label>
+                      <div className="flex items-center overflow-hidden rounded-xl border-2 border-beige-300 bg-white focus-within:border-olive-500">
+                        <span className="px-4 py-3 text-base font-bold text-olive-700 bg-beige-100 border-l border-beige-300">+20</span>
+                        <input
+                          type="tel"
+                          inputMode="numeric"
+                          dir="ltr"
+                          placeholder="1XXXXXXXXX"
+                          value={phoneLocal}
+                          onChange={(e) => setPhoneLocal(e.target.value.replace(/\D/g, '').slice(0, 11))}
+                          className="w-full px-4 py-3 text-base text-olive-800 outline-none"
+                        />
+                      </div>
+                      <p className="mt-2 text-xs sm:text-sm text-olive-500 text-center sm:text-right">
+                        أدخل الرقم بدون +20 (مثال: 1XXXXXXXXX أو 01XXXXXXXXX)
+                      </p>
+                    </div>
+
+                    <div className="mb-4 sm:mb-6">
                       <label className="block text-base sm:text-lg font-bold text-olive-700 mb-3 sm:mb-4 text-center sm:text-right">ارفع صورة إيصال التحويل</label>
                       <div className="border-2 border-dashed border-olive-300 rounded-xl sm:rounded-2xl p-6 sm:p-8 text-center">
                         {screenshotPreview ? (
@@ -538,7 +571,7 @@ const Donate = () => {
                         whileTap={{ scale: 0.98 }}
                         type="button"
                         onClick={handleSubmit}
-                        disabled={!screenshot || loading}
+                        disabled={!screenshot || !normalizeEgyptNumber(phoneLocal) || loading}
                         className="flex-1 bg-gold-500 hover:bg-gold-600 disabled:bg-gold-300 text-white text-base sm:text-lg font-bold py-3 sm:py-4 rounded-xl"
                       >
                         {loading ? 'جاري الإرسال...' : 'إرسال التبرع'}
