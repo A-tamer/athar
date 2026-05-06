@@ -147,9 +147,9 @@ async function sendTextMessage(token, chatId, message, keyboard, imageUrl = null
 
 async function sendTwilioWhatsApp({ accountSid, authToken, from, toPhone, amount, causeLabel }) {
   const to = toPhone.startsWith('whatsapp:') ? toPhone : `whatsapp:${toPhone}`
-  const bodyText = `شكراً لتبرعك مع أثر 💛
-تم استلام تبرعك بقيمة ${amount.toLocaleString()} جنيه${causeLabel ? ` (${causeLabel})` : ''}.
-جزاك الله خيراً وتقبّل منك.`
+  const bodyText = `شكراً لتبرعك مع أثر ❤️
+تم استلام تبرعك بقيمة 250 جنيه (تبرّع لإفطار صائم يوم عرفات)
+جزاك الله خيراً وتقبّل منكم صالح الأعمال`
 
   const payload = new URLSearchParams({
     From: from,
