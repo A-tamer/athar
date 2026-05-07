@@ -31,6 +31,7 @@ export default async function handler(req, res) {
     const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID
     const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN
     const TWILIO_WHATSAPP_FROM = process.env.TWILIO_WHATSAPP_FROM
+    const TWILIO_WHATSAPP_CONTENT_SID = process.env.TWILIO_WHATSAPP_CONTENT_SID
 
     const notificationResults = {
       telegram: { attempted: false, sent: false },
@@ -111,6 +112,7 @@ ${causeLine}${unitsLine}${boxesLine}${phoneLine}💰 *المبلغ:* ${amount.to
           accountSid: TWILIO_ACCOUNT_SID,
           authToken: TWILIO_AUTH_TOKEN,
           from: TWILIO_WHATSAPP_FROM,
+          contentSid: TWILIO_WHATSAPP_CONTENT_SID,
           toPhone: phoneNumber,
           amount,
           causeLabel: causeLabel || cause,
@@ -145,17 +147,29 @@ async function sendTextMessage(token, chatId, message, keyboard, imageUrl = null
   })
 }
 
-async function sendTwilioWhatsApp({ accountSid, authToken, from, toPhone, amount, causeLabel }) {
+async function sendTwilioWhatsApp({ accountSid, authToken, from, contentSid, toPhone, amount, causeLabel }) {
   const to = toPhone.startsWith('whatsapp:') ? toPhone : `whatsapp:${toPhone}`
-  const bodyText = `شكراً لتبرعك مع أثر ❤️
+  const payload = new URLSearchParams({ From: from, To: to })
+
+  // Outside WhatsApp's 24-hour customer service window, Twilio requires an approved template.
+  if (contentSid) {
+    payload.set('ContentSid', contentSid)
+    payload.set(
+      'ContentVariables',
+      JSON.stringify({
+        '1': amount.toLocaleString(),
+        '2': causeLabel || 'تبرّع لإفطار صائم يوم عرفات',
+      })
+    )
+  } else {
+    // Fallback works only if recipient is inside the 24-hour messaging window.
+    payload.set(
+      'Body',
+      `شكراً لتبرعك مع أثر ❤️
 تم استلام تبرعك بقيمة 250 جنيه (تبرّع لإفطار صائم يوم عرفات)
 جزاك الله خيراً وتقبّل منكم صالح الأعمال`
-
-  const payload = new URLSearchParams({
-    From: from,
-    To: to,
-    Body: bodyText,
-  })
+    )
+  }
 
   const auth = Buffer.from(`${accountSid}:${authToken}`).toString('base64')
   const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`, {
