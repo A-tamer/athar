@@ -9,23 +9,21 @@ import {
   YAxis,
   Tooltip,
   CartesianGrid,
-  Legend,
+  LabelList,
 } from 'recharts'
 
 const OLIVE_LIGHT = '#7d9048'
 const GOLD = '#d4a64a'
-const SAND = '#e5d8bd'
 const SAND_DARK = '#c7ab7f'
 
-const pieColors = [OLIVE_LIGHT, SAND]
+const pieColors = [OLIVE_LIGHT, '#e5d8bd']
 
 function PieTooltip({ active, payload }) {
   if (!active || !payload?.length) return null
   const p = payload[0]
   return (
-    <div className="rounded-xl border border-beige-300 bg-white px-3 py-2 text-sm shadow-lg text-right" dir="rtl">
-      <p className="font-bold text-olive-800">{p.name}</p>
-      <p className="tabular-nums text-olive-700">{Number(p.value).toLocaleString()} شنطة</p>
+    <div className="rounded-lg border border-beige-300 bg-white px-2 py-1.5 text-xs shadow text-right tabular-nums" dir="rtl">
+      {Number(p.value).toLocaleString()}
     </div>
   )
 }
@@ -34,9 +32,8 @@ function BarTooltip({ active, payload }) {
   if (!active || !payload?.length) return null
   const row = payload[0].payload
   return (
-    <div className="rounded-xl border border-beige-300 bg-white px-3 py-2 text-sm shadow-lg text-right" dir="rtl">
-      <p className="font-bold text-olive-800">{row.fullLabel}</p>
-      <p className="tabular-nums text-olive-700">{row.display}</p>
+    <div className="rounded-lg border border-beige-300 bg-white px-2 py-1.5 text-xs shadow text-right tabular-nums" dir="rtl">
+      {row.display}
     </div>
   )
 }
@@ -58,8 +55,8 @@ export default function RamadanStatsCharts({
 }) {
   const remaining = Math.max(0, boxGoal - boxCount)
   const pieData = [
-    { name: 'شنط مُحقَّقة', value: boxCount },
-    { name: 'متبقي للهدف', value: remaining },
+    { name: 'مُنجز', value: boxCount, short: boxCount.toLocaleString() },
+    { name: 'متبقي', value: remaining, short: remaining.toLocaleString() },
   ]
 
   const totalGoalMoney = boxGoal * effectiveCostPerBox
@@ -72,92 +69,96 @@ export default function RamadanStatsCharts({
       ? Math.min(100, Math.round((avgPerBox / effectiveCostPerBox) * 100))
       : 0
 
-  const histogramData = [
+  const barRows = [
     {
-      name: 'هدف الشنط',
+      name: 'شنط / هدف',
       pct: percentToGoal,
-      fullLabel: 'التقدم نحو هدف الشنط',
-      display: `${percentToGoal}% (${boxCount.toLocaleString()} / ${boxGoal.toLocaleString()} شنطة)`,
+      display: `${percentToGoal}%`,
     },
     {
-      name: 'التغطية المالية',
+      name: 'ج.م / هدف مالي',
       pct: moneyProgressPct,
-      fullLabel: 'التبرعات مقابل تكلفة الهدف كاملاً',
-      display: `${moneyProgressPct}% (${totalDonations.toLocaleString()} ج.م / ${Math.round(totalGoalMoney).toLocaleString()} ج.م تقديراً)`,
+      display: `${moneyProgressPct}%`,
     },
     {
-      name: 'متوسط التبرع / شنطة',
+      name: 'متوسط / تكلفة',
       pct: avgVsCostPct,
-      fullLabel: 'متوسط التبرع لكل شنطة مقابل التكلفة التقديرية',
-      display:
-        boxCount > 0
-          ? `${avgVsCostPct}% (متوسط ${Math.round(avgPerBox).toLocaleString()} ج.م لكل شنطة)`
-          : 'لا توجد شنط محسوبة بعد',
+      display: boxCount > 0 ? `${avgVsCostPct}%` : '—',
     },
   ]
 
+  const statTiles = [
+    { label: 'ج.م', value: totalDonations.toLocaleString() },
+    { label: 'شنط', value: boxCount.toLocaleString() },
+    { label: 'هدف شنط', value: boxGoal.toLocaleString() },
+    { label: '% هدف', value: `${percentToGoal}%` },
+    { label: 'ج.م/شنطة', value: Math.round(effectiveCostPerBox).toLocaleString() },
+  ]
+
   return (
-    <div className="grid gap-10 lg:grid-cols-2 lg:gap-8 max-w-5xl mx-auto" dir="rtl">
-      <div className="rounded-2xl border border-beige-200 bg-beige-50/80 p-4 sm:p-6 shadow-sm">
-        <h3 className="text-center font-bold text-olive-800 mb-1">توزيع هدف الشنط</h3>
-        <p className="text-center text-xs text-olive-600 mb-4">دائرة: المُنجز مقابل المتبقي</p>
-        <div className="h-[260px] w-full min-w-0">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={pieData}
-                cx="50%"
-                cy="50%"
-                innerRadius={62}
-                outerRadius={88}
-                paddingAngle={2}
-                dataKey="value"
-                nameKey="name"
-              >
-                {pieData.map((_, i) => (
-                  <Cell key={i} fill={pieColors[i % pieColors.length]} stroke="#fff" strokeWidth={2} />
-                ))}
-              </Pie>
-              <Tooltip content={<PieTooltip />} />
-              <Legend
-                verticalAlign="bottom"
-                formatter={(value) => <span className="text-olive-800 text-sm">{value}</span>}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-        <p className="text-center text-sm font-bold text-olive-700 mt-2">{percentToGoal}% من الهدف</p>
+    <div className="mx-auto max-w-5xl space-y-8" dir="rtl">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5 sm:gap-4">
+        {statTiles.map((t) => (
+          <div
+            key={t.label}
+            className="rounded-2xl border border-beige-200 bg-beige-50/90 px-3 py-4 text-center shadow-sm"
+          >
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-olive-600 sm:text-xs">{t.label}</p>
+            <p className="mt-1 text-xl font-bold tabular-nums text-olive-800 sm:text-2xl">{t.value}</p>
+          </div>
+        ))}
       </div>
 
-      <div className="rounded-2xl border border-beige-200 bg-beige-50/80 p-4 sm:p-6 shadow-sm">
-        <h3 className="text-center font-bold text-olive-800 mb-1">مؤشرات التقدم</h3>
-        <p className="text-center text-xs text-olive-600 mb-4">أعمدة: نِسَب ومؤشرات (مرر للتفاصيل)</p>
-        <div className="h-[280px] w-full min-w-0">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={histogramData} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5d8bd" vertical={false} />
-              <XAxis
-                dataKey="name"
-                tick={{ fill: '#4c582e', fontSize: 11 }}
-                interval={0}
-                angle={-12}
-                textAnchor="end"
-                height={56}
-              />
-              <YAxis
-                domain={[0, 100]}
-                tick={{ fill: '#4c582e', fontSize: 11 }}
-                tickFormatter={(v) => `${v}%`}
-                width={36}
-              />
-              <Tooltip content={<BarTooltip />} cursor={{ fill: 'rgba(125, 144, 72, 0.08)' }} />
-              <Bar dataKey="pct" name="النسبة" radius={[8, 8, 0, 0]}>
-                {histogramData.map((_, i) => (
-                  <Cell key={i} fill={i === 1 ? GOLD : i === 2 ? SAND_DARK : OLIVE_LIGHT} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+      <div className="grid gap-8 lg:grid-cols-2 lg:gap-6">
+        <div className="rounded-2xl border border-beige-200 bg-beige-50/80 p-4 shadow-sm sm:p-5">
+          <h3 className="mb-4 text-center text-sm font-bold text-olive-800">شنط: مُنجز / متبقي</h3>
+          <div className="h-[240px] w-full min-w-0 sm:h-[260px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={pieData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={58}
+                  outerRadius={86}
+                  paddingAngle={2}
+                  dataKey="value"
+                  nameKey="name"
+                >
+                  {pieData.map((_, i) => (
+                    <Cell key={i} fill={pieColors[i % pieColors.length]} stroke="#fff" strokeWidth={2} />
+                  ))}
+                  <LabelList dataKey="short" position="outside" fill="#4c582e" style={{ fontSize: 12, fontWeight: 700 }} />
+                </Pie>
+                <Tooltip content={<PieTooltip />} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-beige-200 bg-beige-50/80 p-4 shadow-sm sm:p-5">
+          <h3 className="mb-4 text-center text-sm font-bold text-olive-800">نِسَب %</h3>
+          <div className="h-[260px] w-full min-w-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={barRows} margin={{ top: 16, right: 8, left: 0, bottom: 8 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5d8bd" vertical={false} />
+                <XAxis dataKey="name" tick={{ fill: '#4c582e', fontSize: 10 }} interval={0} height={48} />
+                <YAxis
+                  domain={[0, 100]}
+                  tick={{ fill: '#4c582e', fontSize: 10 }}
+                  tickFormatter={(v) => `${v}`}
+                  width={28}
+                />
+                <Tooltip content={<BarTooltip />} cursor={{ fill: 'rgba(125, 144, 72, 0.08)' }} />
+                <Bar dataKey="pct" radius={[8, 8, 0, 0]}>
+                  {barRows.map((_, i) => (
+                    <Cell key={i} fill={i === 1 ? GOLD : i === 2 ? SAND_DARK : OLIVE_LIGHT} />
+                  ))}
+                  <LabelList dataKey="pct" position="top" formatter={(v) => `${v}%`} fill="#4c582e" style={{ fontSize: 11, fontWeight: 700 }} />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
     </div>

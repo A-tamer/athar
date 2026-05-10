@@ -45,7 +45,8 @@ const Donate = () => {
   const [screenshotPreview, setScreenshotPreview] = useState(null)
   const [phoneLocal, setPhoneLocal] = useState('')
   const [loading, setLoading] = useState(false)
-  const [success, setSuccess] = useState(false)
+  /** null | 'processing' (2–3s) | 'done' */
+  const [thankYouPhase, setThankYouPhase] = useState(null)
 
   useEffect(() => {
     setStep(1)
@@ -55,7 +56,15 @@ const Donate = () => {
     setScreenshot(null)
     setScreenshotPreview(null)
     setPhoneLocal('')
+    setThankYouPhase(null)
   }, [donationType])
+
+  useEffect(() => {
+    if (thankYouPhase !== 'processing') return undefined
+    const ms = 2000 + Math.floor(Math.random() * 1001)
+    const t = window.setTimeout(() => setThankYouPhase('done'), ms)
+    return () => window.clearTimeout(t)
+  }, [thankYouPhase])
 
   const unitCost = cause.unitCost
   const totalAmount = units ? units * unitCost : customAmount ? parseInt(String(customAmount), 10) || 0 : 0
@@ -129,46 +138,90 @@ const Donate = () => {
         console.log('Telegram notification failed:', telegramError)
       }
 
-      setSuccess(true)
+      setThankYouPhase('processing')
     } catch (error) {
       console.error('Error submitting donation:', error)
-      setSuccess(true)
+      alert('تعذّر إرسال التبرع. حاول مرة أخرى.')
     }
     setLoading(false)
   }
 
   const step1Hint = 'اختر عدد وجبات الإفطار أو المبلغ'
 
-  if (success) {
+  if (thankYouPhase) {
+    const isProcessing = thankYouPhase === 'processing'
     return (
       <div className="min-h-screen bg-beige-100">
         <Navbar />
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="min-h-[80vh] flex items-center justify-center pt-28 px-4"
-        >
-          <div className="text-center p-6 sm:p-10">
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: 'spring', bounce: 0.5 }}
-              className="text-6xl sm:text-8xl mb-4 sm:mb-6"
-            >
-              ✅
-            </motion.div>
-            <h1 className="text-2xl sm:text-4xl font-bold text-olive-700 mb-3 sm:mb-4">شكراً لك!</h1>
-            <p className="text-base sm:text-xl text-olive-600 mb-6 sm:mb-8">تم استلام تبرعك وسيتم مراجعته قريباً</p>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => navigate('/')}
-              className="bg-olive-600 hover:bg-olive-700 text-white text-base sm:text-lg font-bold py-3 px-6 sm:px-8 rounded-xl"
-            >
-              العودة للرئيسية
-            </motion.button>
+        <div className="min-h-[80vh] flex items-center justify-center pt-24 px-4 pb-12 sm:pt-28">
+          <div className="w-full max-w-sm text-center">
+            <AnimatePresence mode="wait">
+              {isProcessing ? (
+                <motion.div
+                  key="processing"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  className="rounded-3xl border border-beige-200 bg-white px-6 py-10 shadow-lg"
+                >
+                  <div className="relative mx-auto mb-6 flex h-16 w-16 items-center justify-center">
+                    <motion.div
+                      className="h-12 w-12 rounded-full border-2 border-beige-200 border-t-olive-600 border-r-olive-500"
+                      animate={{ rotate: 360 }}
+                      transition={{ repeat: Infinity, duration: 0.8, ease: 'linear' }}
+                    />
+                  </div>
+                  <p className="text-lg font-bold text-olive-800">جاري المعالجة</p>
+                  <p className="mt-2 text-sm leading-relaxed text-olive-600">يتم تسجيل تبرعك… يرجى الانتظار لحظات</p>
+                  <div className="mt-6 flex justify-center gap-1.5">
+                    {[0, 1, 2].map((i) => (
+                      <motion.span
+                        key={i}
+                        className="h-2 w-2 rounded-full bg-olive-500"
+                        animate={{ opacity: [0.35, 1, 0.35], scale: [0.85, 1.1, 0.85] }}
+                        transition={{ repeat: Infinity, duration: 1.1, delay: i * 0.18 }}
+                      />
+                    ))}
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="done"
+                  initial={{ opacity: 0, scale: 0.92 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ type: 'spring', stiffness: 380, damping: 24 }}
+                  className="rounded-3xl border border-beige-200 bg-white px-6 py-10 shadow-lg"
+                >
+                  <motion.div
+                    initial={{ scale: 0.5, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 15, delay: 0.05 }}
+                    className="mb-5 text-6xl leading-none sm:text-7xl"
+                    aria-hidden
+                  >
+                    ✔️
+                  </motion.div>
+                  <h1 className="text-xl font-bold text-olive-800 sm:text-2xl">تم تسجيل التبرع بنجاح</h1>
+                  <p className="mt-3 text-sm leading-relaxed text-olive-600 sm:text-base">
+                    شكرًا لمساهمتك في هذا الأثر. العملية قيد المراجعة
+                  </p>
+                  <p className="mt-2 text-sm leading-relaxed text-olive-600 sm:text-base">
+                    نعمل على تأكيد العملية بأمان ودقة
+                  </p>
+                  <motion.button
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    type="button"
+                    onClick={() => navigate('/')}
+                    className="mt-8 w-full bg-olive-600 py-3.5 text-base font-bold text-white rounded-xl hover:bg-olive-700"
+                  >
+                    العودة للرئيسية
+                  </motion.button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
-        </motion.div>
+        </div>
       </div>
     )
   }
