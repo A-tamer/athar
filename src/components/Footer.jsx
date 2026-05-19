@@ -1,4 +1,4 @@
-const LINKEDIN_URL = 'https://www.linkedin.com/in/ahmeddtamerr'
+const LINKEDIN_URL = 'https://www.linkedin.com/in/ahmed-wafa-asu?utm_source=share_via&utm_content=profile&utm_medium=member_ios'
 
 const Footer = () => {
   const year = new Date().getFullYear()

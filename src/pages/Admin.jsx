@@ -14,8 +14,22 @@ import {
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { onAuthStateChanged, signOut } from 'firebase/auth'
 import { db, auth, storage } from '../lib/firebase'
+import { CAUSES } from '../lib/causes'
+import { notifyDonation } from '../lib/notifyDonation'
 
-const BOX_COST = 300
+const BOX_COST = CAUSES.ramadan.unitCost
+const MEAL_COST = CAUSES.arafat.unitCost
+
+/** Donations on/after this date count toward the Arafat campaign; earlier ones are Ramadan boxes. */
+const CAMPAIGN_CUTOFF = new Date(2026, 4, 9)
+CAMPAIGN_CUTOFF.setHours(0, 0, 0, 0)
+
+const isArafatCampaignDonation = (d) => {
+  if (!d.createdAt) return d.cause === 'arafat'
+  return d.createdAt >= CAMPAIGN_CUTOFF
+}
+
+const isRamadanCampaignDonation = (d) => !isArafatCampaignDonation(d)
 
 const Admin = () => {
   const navigate = useNavigate()
@@ -23,16 +37,29 @@ const Admin = () => {
   const [loading, setLoading] = useState(true)
   const [donations, setDonations] = useState([])
   const [selectedImage, setSelectedImage] = useState(null)
+  const [campaignTab, setCampaignTab] = useState('arafat')
   const [filter, setFilter] = useState('all')
-  const [stats, setStats] = useState({ 
-    total: 0, 
-    pending: 0, 
-    approved: 0, 
-    rejected: 0,
-    boxes: 0,
-    todayDonations: 0,
-    todayAmount: 0,
-    avgDonation: 0
+  const [stats, setStats] = useState({
+    arafat: {
+      total: 0,
+      pending: 0,
+      approved: 0,
+      rejected: 0,
+      units: 0,
+      todayDonations: 0,
+      todayAmount: 0,
+      avgDonation: 0,
+    },
+    ramadan: {
+      total: 0,
+      pending: 0,
+      approved: 0,
+      rejected: 0,
+      boxes: 0,
+      todayDonations: 0,
+      todayAmount: 0,
+      avgDonation: 0,
+    },
   })
   
   // Manual add form
@@ -78,26 +105,54 @@ const Admin = () => {
     return () => unsubDonations()
   }, [user])
 
-  const calculateStats = (data) => {
-    const approvedDonations = data.filter(d => d.status === 'approved')
+  const calculateStatsForSegment = (segment, isArafat) => {
+    const approvedDonations = segment.filter((d) => d.status === 'approved')
     const total = approvedDonations.reduce((acc, d) => acc + (d.amount || 0), 0)
-    const boxes = approvedDonations.reduce((acc, d) => {
-      const b = d.boxes || 0
-      return acc + (b > 0 ? b : Math.floor((d.amount || 0) / BOX_COST))
-    }, 0)
-    const pending = data.filter(d => d.status === 'pending').length
+    const pending = segment.filter((d) => d.status === 'pending').length
     const approved = approvedDonations.length
-    const rejected = data.filter(d => d.status === 'rejected').length
+    const rejected = segment.filter((d) => d.status === 'rejected').length
     const avgDonation = approved > 0 ? Math.round(total / approved) : 0
-    
-    // Today's stats
+
+    const units = isArafat
+      ? approvedDonations.reduce((acc, d) => {
+          const u = d.units || 0
+          return acc + (u > 0 ? u : Math.floor((d.amount || 0) / MEAL_COST))
+        }, 0)
+      : 0
+
+    const boxes = !isArafat
+      ? approvedDonations.reduce((acc, d) => {
+          const b = d.boxes || 0
+          return acc + (b > 0 ? b : Math.floor((d.amount || 0) / BOX_COST))
+        }, 0)
+      : 0
+
     const today = new Date()
     today.setHours(0, 0, 0, 0)
-    const todayApproved = approvedDonations.filter(d => d.createdAt && d.createdAt >= today)
+    const todayApproved = approvedDonations.filter((d) => d.createdAt && d.createdAt >= today)
     const todayDonations = todayApproved.length
     const todayAmount = todayApproved.reduce((acc, d) => acc + (d.amount || 0), 0)
-    
-    setStats({ total, pending, approved, rejected, boxes, todayDonations, todayAmount, avgDonation })
+
+    return {
+      total,
+      pending,
+      approved,
+      rejected,
+      units,
+      boxes,
+      todayDonations,
+      todayAmount,
+      avgDonation,
+    }
+  }
+
+  const calculateStats = (data) => {
+    const arafatData = data.filter(isArafatCampaignDonation)
+    const ramadanData = data.filter(isRamadanCampaignDonation)
+    setStats({
+      arafat: calculateStatsForSegment(arafatData, true),
+      ramadan: calculateStatsForSegment(ramadanData, false),
+    })
   }
 
   const handleStatusChange = async (donationId, newStatus) => {
@@ -137,17 +192,40 @@ const Admin = () => {
       }
 
       const amount = parseInt(manualAmount)
-      const boxes = manualBoxes ? parseInt(manualBoxes) : Math.floor(amount / BOX_COST)
+      const isArafat = campaignTab === 'arafat'
+      const units = isArafat
+        ? manualBoxes
+          ? parseInt(manualBoxes)
+          : Math.floor(amount / MEAL_COST)
+        : 0
+      const boxes = !isArafat
+        ? manualBoxes
+          ? parseInt(manualBoxes)
+          : Math.floor(amount / BOX_COST)
+        : 0
 
-      await addDoc(collection(db, 'donations'), {
+      const docRef = await addDoc(collection(db, 'donations'), {
         amount,
-        boxes,
+        cause: isArafat ? 'arafat' : 'ramadan',
+        ...(isArafat ? { units } : { boxes }),
         type: 'manual',
         paymentMethod: manualPaymentMethod || 'إضافة يدوية',
         screenshotURL,
         status: 'approved',
         createdAt: serverTimestamp(),
-        addedBy: user?.email
+        addedBy: user?.email,
+      })
+
+      await notifyDonation({
+        donationId: docRef.id,
+        amount,
+        cause: isArafat ? 'arafat' : 'ramadan',
+        causeLabel: isArafat ? CAUSES.arafat.headline : CAUSES.ramadan.headline,
+        units: isArafat ? units : 0,
+        boxes: isArafat ? 0 : boxes,
+        paymentMethod: manualPaymentMethod || 'إضافة يدوية',
+        screenshotURL,
+        status: 'approved',
       })
 
       // Reset form
@@ -172,7 +250,13 @@ const Admin = () => {
     navigate('/login')
   }
 
-  const filteredDonations = donations.filter(d => {
+  const campaignDonations = donations.filter(
+    campaignTab === 'arafat' ? isArafatCampaignDonation : isRamadanCampaignDonation
+  )
+  const activeStats = stats[campaignTab]
+  const isArafatTab = campaignTab === 'arafat'
+
+  const filteredDonations = campaignDonations.filter((d) => {
     if (filter === 'all') return true
     return d.status === filter
   })
@@ -212,6 +296,36 @@ const Admin = () => {
       </header>
 
       <div className="container mx-auto px-6 py-8">
+        {/* Campaign tabs */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-wrap gap-2 mb-6"
+        >
+          <button
+            type="button"
+            onClick={() => setCampaignTab('arafat')}
+            className={`px-5 py-2.5 rounded-xl font-bold transition-all ${
+              campaignTab === 'arafat'
+                ? 'bg-gold-500 text-white shadow-lg'
+                : 'bg-white text-olive-600 hover:bg-olive-100'
+            }`}
+          >
+            حملة عرفات (من ٩ مايو)
+          </button>
+          <button
+            type="button"
+            onClick={() => setCampaignTab('ramadan')}
+            className={`px-5 py-2.5 rounded-xl font-bold transition-all ${
+              campaignTab === 'ramadan'
+                ? 'bg-gold-500 text-white shadow-lg'
+                : 'bg-white text-olive-600 hover:bg-olive-100'
+            }`}
+          >
+            شنط رمضان (قبل ٩ مايو)
+          </button>
+        </motion.div>
+
         {/* Stats Cards - Row 1 */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
           <motion.div
@@ -220,7 +334,7 @@ const Admin = () => {
             className="bg-white rounded-2xl p-4 shadow-lg"
           >
             <h3 className="text-olive-600 text-sm mb-1">إجمالي التبرعات</h3>
-            <p className="text-2xl font-bold text-gold-500">{stats.total.toLocaleString()}</p>
+            <p className="text-2xl font-bold text-gold-500">{activeStats.total.toLocaleString()}</p>
             <p className="text-olive-500 text-xs">جنيه</p>
           </motion.div>
           <motion.div
@@ -229,9 +343,11 @@ const Admin = () => {
             transition={{ delay: 0.1 }}
             className="bg-white rounded-2xl p-4 shadow-lg"
           >
-            <h3 className="text-olive-600 text-sm mb-1">عدد الشنط</h3>
-            <p className="text-2xl font-bold text-olive-700">{stats.boxes}</p>
-            <p className="text-olive-500 text-xs">شنطة</p>
+            <h3 className="text-olive-600 text-sm mb-1">{isArafatTab ? 'عدد الوجبات' : 'عدد الشنط'}</h3>
+            <p className="text-2xl font-bold text-olive-700">
+              {isArafatTab ? activeStats.units : activeStats.boxes}
+            </p>
+            <p className="text-olive-500 text-xs">{isArafatTab ? 'وجبة' : 'شنطة'}</p>
           </motion.div>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -240,7 +356,7 @@ const Admin = () => {
             className="bg-white rounded-2xl p-4 shadow-lg"
           >
             <h3 className="text-olive-600 text-sm mb-1">في الانتظار</h3>
-            <p className="text-2xl font-bold text-orange-500">{stats.pending}</p>
+            <p className="text-2xl font-bold text-orange-500">{activeStats.pending}</p>
             <p className="text-olive-500 text-xs">تبرع</p>
           </motion.div>
           <motion.div
@@ -250,7 +366,7 @@ const Admin = () => {
             className="bg-white rounded-2xl p-4 shadow-lg"
           >
             <h3 className="text-olive-600 text-sm mb-1">معتمدة</h3>
-            <p className="text-2xl font-bold text-green-500">{stats.approved}</p>
+            <p className="text-2xl font-bold text-green-500">{activeStats.approved}</p>
             <p className="text-olive-500 text-xs">تبرع</p>
           </motion.div>
         </div>
@@ -264,7 +380,7 @@ const Admin = () => {
             className="bg-olive-50 rounded-2xl p-4 shadow-lg"
           >
             <h3 className="text-olive-600 text-sm mb-1">تبرعات اليوم</h3>
-            <p className="text-2xl font-bold text-olive-700">{stats.todayDonations}</p>
+            <p className="text-2xl font-bold text-olive-700">{activeStats.todayDonations}</p>
             <p className="text-olive-500 text-xs">تبرع</p>
           </motion.div>
           <motion.div
@@ -274,7 +390,7 @@ const Admin = () => {
             className="bg-olive-50 rounded-2xl p-4 shadow-lg"
           >
             <h3 className="text-olive-600 text-sm mb-1">مبلغ اليوم</h3>
-            <p className="text-2xl font-bold text-olive-700">{stats.todayAmount.toLocaleString()}</p>
+            <p className="text-2xl font-bold text-olive-700">{activeStats.todayAmount.toLocaleString()}</p>
             <p className="text-olive-500 text-xs">جنيه</p>
           </motion.div>
           <motion.div
@@ -284,7 +400,7 @@ const Admin = () => {
             className="bg-olive-50 rounded-2xl p-4 shadow-lg"
           >
             <h3 className="text-olive-600 text-sm mb-1">متوسط التبرع</h3>
-            <p className="text-2xl font-bold text-olive-700">{stats.avgDonation.toLocaleString()}</p>
+            <p className="text-2xl font-bold text-olive-700">{activeStats.avgDonation.toLocaleString()}</p>
             <p className="text-olive-500 text-xs">جنيه</p>
           </motion.div>
           <motion.div
@@ -294,7 +410,7 @@ const Admin = () => {
             className="bg-red-50 rounded-2xl p-4 shadow-lg"
           >
             <h3 className="text-olive-600 text-sm mb-1">مرفوضة</h3>
-            <p className="text-2xl font-bold text-red-500">{stats.rejected}</p>
+            <p className="text-2xl font-bold text-red-500">{activeStats.rejected}</p>
             <p className="text-olive-500 text-xs">تبرع</p>
           </motion.div>
         </div>
@@ -320,10 +436,12 @@ const Admin = () => {
               />
             </div>
             <div>
-              <label className="block text-olive-600 text-sm mb-1">عدد الشنط (اختياري)</label>
+              <label className="block text-olive-600 text-sm mb-1">
+                {isArafatTab ? 'عدد الوجبات (اختياري)' : 'عدد الشنط (اختياري)'}
+              </label>
               <input
                 type="number"
-                placeholder="يحسب تلقائياً إذا تركته فارغاً"
+                placeholder={isArafatTab ? 'يُحسب من المبلغ ÷ ١٠٠' : 'يُحسب من المبلغ ÷ ٣٠٠'}
                 value={manualBoxes}
                 onChange={(e) => setManualBoxes(e.target.value)}
                 className="w-full py-3 px-4 border-2 border-beige-300 rounded-xl focus:border-olive-500 focus:outline-none"
@@ -410,7 +528,9 @@ const Admin = () => {
               <thead className="bg-olive-100">
                 <tr>
                   <th className="px-4 py-3 text-right text-olive-700 text-sm">المبلغ</th>
-                  <th className="px-4 py-3 text-right text-olive-700 text-sm">الشنط</th>
+                  <th className="px-4 py-3 text-right text-olive-700 text-sm">
+                    {isArafatTab ? 'الوجبات' : 'الشنط'}
+                  </th>
                   <th className="px-4 py-3 text-right text-olive-700 text-sm">طريقة الدفع</th>
                   <th className="px-4 py-3 text-right text-olive-700 text-sm">الإيصال</th>
                   <th className="px-4 py-3 text-right text-olive-700 text-sm">الحالة</th>
@@ -425,7 +545,11 @@ const Admin = () => {
                       {donation.amount?.toLocaleString()} جنيه
                     </td>
                     <td className="px-4 py-3 text-olive-600">
-                      {donation.boxes || Math.floor((donation.amount || 0) / BOX_COST)}
+                      {isArafatTab
+                        ? donation.units ||
+                          Math.floor((donation.amount || 0) / MEAL_COST)
+                        : donation.boxes ||
+                          Math.floor((donation.amount || 0) / BOX_COST)}
                     </td>
                     <td className="px-4 py-3 text-olive-600 text-sm">
                       {donation.paymentMethod || 'غير محدد'}

@@ -2,7 +2,7 @@
 export const CAUSES = {
   arafat: {
     id: 'arafat',
-    unitCost: 50,
+    unitCost: 100,
     unitLabelSingular: 'وجبة',
     unitLabelPlural: 'وجبات',
     headline: 'تبرّع لإفطار صائم يوم عرفات',

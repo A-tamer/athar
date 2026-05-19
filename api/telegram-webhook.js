@@ -118,12 +118,22 @@ export default async function handler(req, res) {
     console.log('Donation updated to:', newStatus)
 
     // Update the Telegram message
-    const updatedMessage = `${statusEmoji} *${statusText}*
+    const escapeHtml = (text) =>
+      String(text ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
 
-💰 *المبلغ:* ${donation.amount.toLocaleString()} جنيه
-📦 *عدد الشنط:* ${donation.boxes || 'غير محدد'}
-💳 *طريقة الدفع:* ${donation.paymentMethod}
-🆔 *رقم التبرع:* \`${donationId}\`
+    const unitsLine =
+      donation.units > 0 ? `📊 <b>الوجبات:</b> ${donation.units}\n` : ''
+    const boxesLine =
+      donation.boxes > 0 ? `📦 <b>عدد الشنط:</b> ${donation.boxes}\n` : ''
+
+    const updatedMessage = `${statusEmoji} <b>${statusText}</b>
+
+💰 <b>المبلغ:</b> ${donation.amount.toLocaleString()} جنيه
+${unitsLine}${boxesLine}💳 <b>طريقة الدفع:</b> ${escapeHtml(donation.paymentMethod)}
+🆔 <b>رقم التبرع:</b> <code>${escapeHtml(donationId)}</code>
 
 ${newStatus === 'approved' ? '✅ تمت الموافقة وإضافة المبلغ للعداد' : '❌ تم رفض التبرع'}`
 
@@ -135,7 +145,8 @@ ${newStatus === 'approved' ? '✅ تمت الموافقة وإضافة المب�
         chat_id: chatId,
         message_id: messageId,
         caption: updatedMessage,
-        parse_mode: 'Markdown'
+        parse_mode: 'HTML',
+        reply_markup: { inline_keyboard: [] },
       })
     })
     

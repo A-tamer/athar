@@ -6,6 +6,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { db, storage } from '../lib/firebase'
 import Navbar from '../components/Navbar'
 import { CAUSES } from '../lib/causes'
+import { notifyDonation } from '../lib/notifyDonation'
 
 const paymentMethods = [
   {
@@ -118,24 +119,19 @@ const Donate = () => {
         createdAt: serverTimestamp(),
       })
 
-      try {
-        await fetch('/api/notify-donation', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            donationId: docRef.id,
-            amount: totalAmount,
-            cause: CAUSE_ARAFAT,
-            causeLabel: cause.headline,
-            units: unitsCount,
-            boxes: 0,
-            paymentMethod: selectedMethod.name,
-            phoneNumber: normalizedPhone,
-            screenshotURL,
-          })
-        })
-      } catch (telegramError) {
-        console.log('Telegram notification failed:', telegramError)
+      const notified = await notifyDonation({
+        donationId: docRef.id,
+        amount: totalAmount,
+        cause: CAUSE_ARAFAT,
+        causeLabel: cause.headline,
+        units: unitsCount,
+        boxes: 0,
+        paymentMethod: selectedMethod.name,
+        phoneNumber: normalizedPhone,
+        screenshotURL,
+      })
+      if (!notified) {
+        console.error('Telegram notification failed after retries; donation saved:', docRef.id)
       }
 
       setThankYouPhase('processing')
