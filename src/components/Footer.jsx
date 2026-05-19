@@ -26,7 +26,7 @@ const Footer = () => {
         >
           <span className="text-beige-200/55 transition-colors group-hover:text-beige-200/75">Made by</span>
           <span className="bg-gradient-to-r from-beige-100 to-gold-200/90 bg-clip-text font-semibold text-transparent">
-            Eng. Ahmed Tamer
+            Eng. Ahmed Wafa
           </span>
         </a>
       </div>

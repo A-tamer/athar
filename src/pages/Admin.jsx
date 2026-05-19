@@ -16,20 +16,16 @@ import { onAuthStateChanged, signOut } from 'firebase/auth'
 import { db, auth, storage } from '../lib/firebase'
 import { CAUSES } from '../lib/causes'
 import { notifyDonation } from '../lib/notifyDonation'
+import {
+  isArafatCampaignDonation,
+  isRamadanCampaignDonation,
+  mealsForDonation,
+  mealsFromAmount,
+  MEAL_PRICE_EGP,
+} from '../lib/campaignDonations'
 
 const BOX_COST = CAUSES.ramadan.unitCost
-const MEAL_COST = CAUSES.arafat.unitCost
-
-/** Donations on/after this date count toward the Arafat campaign; earlier ones are Ramadan boxes. */
-const CAMPAIGN_CUTOFF = new Date(2026, 4, 9)
-CAMPAIGN_CUTOFF.setHours(0, 0, 0, 0)
-
-const isArafatCampaignDonation = (d) => {
-  if (!d.createdAt) return d.cause === 'arafat'
-  return d.createdAt >= CAMPAIGN_CUTOFF
-}
-
-const isRamadanCampaignDonation = (d) => !isArafatCampaignDonation(d)
+const MEAL_COST = MEAL_PRICE_EGP
 
 const Admin = () => {
   const navigate = useNavigate()
@@ -107,18 +103,14 @@ const Admin = () => {
 
   const calculateStatsForSegment = (segment, isArafat) => {
     const approvedDonations = segment.filter((d) => d.status === 'approved')
-    const total = approvedDonations.reduce((acc, d) => acc + (d.amount || 0), 0)
+    const total = approvedDonations.reduce((acc, d) => acc + (Number(d.amount) || 0), 0)
     const pending = segment.filter((d) => d.status === 'pending').length
     const approved = approvedDonations.length
     const rejected = segment.filter((d) => d.status === 'rejected').length
     const avgDonation = approved > 0 ? Math.round(total / approved) : 0
 
-    const units = isArafat
-      ? approvedDonations.reduce((acc, d) => {
-          const u = d.units || 0
-          return acc + (u > 0 ? u : Math.floor((d.amount || 0) / MEAL_COST))
-        }, 0)
-      : 0
+    // Meals: total money ÷ 100 only — never sum stored units fields
+    const units = isArafat ? mealsFromAmount(total) : 0
 
     const boxes = !isArafat
       ? approvedDonations.reduce((acc, d) => {
@@ -546,8 +538,7 @@ const Admin = () => {
                     </td>
                     <td className="px-4 py-3 text-olive-600">
                       {isArafatTab
-                        ? donation.units ||
-                          Math.floor((donation.amount || 0) / MEAL_COST)
+                        ? mealsForDonation(donation, MEAL_COST)
                         : donation.boxes ||
                           Math.floor((donation.amount || 0) / BOX_COST)}
                     </td>

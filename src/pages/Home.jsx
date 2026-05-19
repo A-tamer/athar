@@ -7,8 +7,9 @@ import CountUp from 'react-countup'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import { CAUSES } from '../lib/causes'
+import { computeArafatTotals, MEAL_PRICE_EGP } from '../lib/campaignDonations'
 
-const MEAL_COST = CAUSES.arafat.unitCost
+const MEAL_COST = MEAL_PRICE_EGP
 const MEAL_GOAL = CAUSES.arafat.mealGoal
 
 const HERO_GOLD = '#D4A757'
@@ -45,14 +46,16 @@ const Home = () => {
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        let total = 0
-        snapshot.forEach((docSnap) => {
+        const donations = snapshot.docs.map((docSnap) => {
           const data = docSnap.data()
-          if (data.cause === 'arafat') {
-            total += data.amount || 0
+          return {
+            ...data,
+            createdAt: data.createdAt?.toDate?.() ?? data.createdAt,
           }
         })
+        const { total, meals } = computeArafatTotals(donations)
         setTotalDonations(total)
+        setMealCount(meals)
       },
       (error) => {
         console.error('Firebase error (arafat):', error)
@@ -62,14 +65,6 @@ const Home = () => {
 
     return () => unsubscribe()
   }, [])
-
-  useEffect(() => {
-    if (MEAL_COST > 0 && totalDonations > 0) {
-      setMealCount(Math.floor(totalDonations / MEAL_COST))
-    } else {
-      setMealCount(0)
-    }
-  }, [totalDonations])
 
   const percentGoal = Math.min(Math.round((mealCount / MEAL_GOAL) * 100), 100)
 
